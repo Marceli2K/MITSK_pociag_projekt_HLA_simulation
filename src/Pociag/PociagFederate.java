@@ -12,7 +12,7 @@
  *   (that goes for your lawyer as well)
  *
  */
-package GUI;
+package Pociag;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
@@ -31,9 +31,14 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-
-public class GUIFederate
+public class PociagFederate
 {
+	//----------------------------------------------------------
+	//                    STATIC VARIABLES
+	//----------------------------------------------------------
+	/** The number of times we will update our attributes and send an interaction */
+	public static final int ITERATIONS = 20;
+
 	/** The sync point all federates will sync up on before starting */
 	public static final String READY_TO_RUN = "ReadyToRun";
 
@@ -41,7 +46,7 @@ public class GUIFederate
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
 	private RTIambassador rtiamb;
-	private GUIFederateAmbassador fedamb;  // created when we connect
+	private PociagFederateAmbassador fedamb;  // created when we connect
 	private HLAfloat64TimeFactory timeFactory; // set when we join
 	protected EncoderFactory encoderFactory;     // set when we join
 
@@ -50,9 +55,9 @@ public class GUIFederate
 	protected AttributeHandle storageMaxHandle;
 	protected AttributeHandle storageAvailableHandle;
 	protected InteractionClassHandle addProductsHandle;
+	protected InteractionClassHandle getProductsHandle;
+	protected ParameterHandle countHandle;
 
-	protected int storageMax = 0;
-	protected int storageAvailable = 0;
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
@@ -65,7 +70,7 @@ public class GUIFederate
 	 */
 	private void log( String message )
 	{
-		System.out.println( "GUIFederate   : " + message );
+		System.out.println( "PociagFederate   : " + message );
 	}
 
 	/**
@@ -105,7 +110,7 @@ public class GUIFederate
 		
 		// connect
 		log( "Connecting..." );
-		fedamb = new GUIFederateAmbassador( this );
+		fedamb = new PociagFederateAmbassador( this );
 		rtiamb.connect( fedamb, CallbackModel.HLA_EVOKED );
 
 		//////////////////////////////
@@ -117,10 +122,10 @@ public class GUIFederate
 		try
 		{
 			URL[] modules = new URL[]{
-			    (new File("foms/pociag.xml")).toURI().toURL(),
+			    (new File("foms/ProducerConsumer.xml")).toURI().toURL(),
 			};
 			
-			rtiamb.createFederationExecution( "PociagFederation", modules );
+			rtiamb.createFederationExecution( "ProducerConsumerFederation", modules );
 			log( "Created Federation" );
 		}
 		catch( FederationExecutionAlreadyExists exists )
@@ -137,9 +142,8 @@ public class GUIFederate
 		////////////////////////////
 		// 4. join the federation //
 		////////////////////////////
-
 		rtiamb.joinFederationExecution( federateName,            // name for the federate
-		                                "gui",   // federate type
+		                                "Pociag",   // federate type
 		                                "PociagFederation"     // name of federation
 		                                 );           // modules we want to add
 
@@ -195,31 +199,40 @@ public class GUIFederate
 		publishAndSubscribe();
 		log( "Published and Subscribed" );
 
-//		// 10. do the main simulation loop //
+		/////////////////////////////////////
+		// 9. register an object to update //
+		/////////////////////////////////////
+		ObjectInstanceHandle objectHandle = rtiamb.registerObjectInstance( storageHandle );
+		log( "Registered Pociag, handle=" + objectHandle );
+		
+		/////////////////////////////////////
+		// 10. do the main simulation loop //
 		/////////////////////////////////////
 		// here is where we do the meat of our work. in each iteration, we will
 		// update the attribute values of the object we registered, and will
 		// send an interaction.
-		GUI gui = new GUI();
 		while( fedamb.isRunning )
 		{
-			int producedValue = gui.produce();
-			if(storageAvailable + producedValue <= storageMax ) {
-				ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
-				ParameterHandle addProductsCountHandle = rtiamb.getParameterHandle(addProductsHandle, "count");
-				HLAinteger32BE count = encoderFactory.createHLAinteger32BE(producedValue);
-				parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
-				rtiamb.sendInteraction(addProductsHandle, parameterHandleValueMap, generateTag());
-			}
-			else
-			{
-				log("Producing canceled because of full storage.");
-			}
-			// 9.3 request a time advance and wait until we get it
-			advanceTime(gui.getTimeToNext());
+			// update ProductsStorage parameters max and available to current values
+			AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
+
+			HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE( Pociag.getInstance().getMax());
+			attributes.put( storageMaxHandle, maxValue.toByteArray() );
+
+			HLAinteger32BE availableValue = encoderFactory.createHLAinteger32BE( Pociag.getInstance().getAvailable() );
+			attributes.put( storageAvailableHandle, availableValue.toByteArray() );
+
+			rtiamb.updateAttributeValues( objectHandle, attributes, generateTag() );
+
+			advanceTime(1);
 			log( "Time Advanced to " + fedamb.federateTime );
 		}
 
+		//////////////////////////////////////
+		// 11. delete the object we created //
+		//////////////////////////////////////
+//		deleteObject( objectHandle );
+//		log( "Deleted Object, handle=" + objectHandle );
 
 		////////////////////////////////////
 		// 12. resign from the federation //
@@ -292,23 +305,32 @@ public class GUIFederate
 	 */
 	private void publishAndSubscribe() throws RTIexception
 	{
-		// subscribe for storage
-		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Pociag" );
-		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "liczbaMiejsc" );
-		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "liczbaWagonow" );
+//		publish ProductsStrorage object
+		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.ProductStorage" );
+		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "max" );
+		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "available" );
 //		// package the information into a handle set
 		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
 		attributes.add( storageMaxHandle );
 		attributes.add( storageAvailableHandle );
-		rtiamb.subscribeObjectClassAttributes( storageHandle, attributes );
+//
+		rtiamb.publishObjectClassAttributes( storageHandle, attributes );
 
-//		publish AddProducts Interaction
+		//get count parameter for ProductsManagment Interaction
+		countHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ProductsManagment" ), "count");
+
+		// subscribe for AddProducts interaction
 		String iname = "HLAinteractionRoot.ProductsManagment.AddProducts";
 		addProductsHandle = rtiamb.getInteractionClassHandle( iname );
-		// do the publication
-		rtiamb.publishInteractionClass(addProductsHandle);
+		rtiamb.subscribeInteractionClass(addProductsHandle);
 
+		// subscribe for GetProducts interaction
+		iname = "HLAinteractionRoot.ProductsManagment.GetProducts";
+		getProductsHandle = rtiamb.getInteractionClassHandle( iname );
+		countHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle( "HLAinteractionRoot.ProductsManagment" ), "count");
+		rtiamb.subscribeInteractionClass(getProductsHandle);
 	}
+
 	/**
 	 * This method will request a time advance to the current time, plus the given
 	 * timestep. It will then wait until a notification of the time advance grant
@@ -320,12 +342,13 @@ public class GUIFederate
 		fedamb.isAdvancing = true;
 		HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime + timestep );
 		rtiamb.timeAdvanceRequest( time );
-		
+
 		// wait for the time advance to be granted. ticking will tell the
 		// LRC to start delivering callbacks to the federate
 		while( fedamb.isAdvancing )
 		{
 			rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+
 		}
 	}
 
@@ -345,7 +368,7 @@ public class GUIFederate
 	public static void main( String[] args )
 	{
 		// get a federate name, use "exampleFederate" as default
-		String federateName = "GUI";
+		String federateName = "Pociag";
 		if( args.length != 0 )
 		{
 			federateName = args[0];
@@ -354,7 +377,7 @@ public class GUIFederate
 		try
 		{
 			// run the example federate
-			new GUIFederate().runFederate( federateName );
+			new PociagFederate().runFederate( federateName );
 		}
 		catch( Exception rtie )
 		{

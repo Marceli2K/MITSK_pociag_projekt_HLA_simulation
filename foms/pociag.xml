@@ -12,6 +12,22 @@
 		<objectClass>
 			<name>HLAobjectRoot</name>
 			<objectClass>
+				<name>GUI</name>
+				<sharing>PublishSubscribe</sharing>
+				<semantics>Graficzny interfejs</semantics>
+				<attribute>
+					<name>liczbaPrzedzialow</name>
+					<dataType>HLAinteger32BE</dataType>
+					<updateType>Conditional</updateType>
+					<updateCondition>On Change</updateCondition>
+					<ownership>Divest</ownership>
+					<sharing>PublishSubscribe</sharing>
+					<transportation>HLAreliable</transportation>
+					<order>Receive</order>
+					<semantics>Liczba przedzialow w pociagu</semantics>
+				</attribute>
+			</objectClass>
+			<objectClass>
 				<name>Pociag</name>
 				<sharing>PublishSubscribe</sharing>
 				<semantics>Srodek transportu</semantics>
