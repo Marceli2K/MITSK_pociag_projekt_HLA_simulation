@@ -117,7 +117,7 @@ public class GUIFederate
 		try
 		{
 			URL[] modules = new URL[]{
-			    (new File("foms/ProducerConsumer.xml")).toURI().toURL(),
+			    (new File("foms/pociag.xml")).toURI().toURL(),
 			};
 			
 			rtiamb.createFederationExecution( "PociagFederation", modules );
