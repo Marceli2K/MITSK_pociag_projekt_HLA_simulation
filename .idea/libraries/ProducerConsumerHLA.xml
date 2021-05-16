@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="ProducerConsumerHLA">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/ProducerConsumerHLA/portico2016.05.28.jar!/" />
+      <root url="jar://$PROJECT_DIR$/ProducerConsumerHLA/portico2016.05.28OLD.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
