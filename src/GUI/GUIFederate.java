@@ -211,6 +211,7 @@ public class GUIFederate
 				parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
 				rtiamb.sendInteraction(addProductsHandle, parameterHandleValueMap, generateTag());
 			}
+
 			else
 			{
 				log("Producing canceled because of full storage.");
@@ -221,7 +222,7 @@ public class GUIFederate
 		}
 
 
-		////////////////////////////////////
+		////////////////////////////////////////////////
 		// 12. resign from the federation //
 		////////////////////////////////////
 		rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
