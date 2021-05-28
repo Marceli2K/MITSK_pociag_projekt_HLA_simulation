@@ -23,7 +23,7 @@ import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
- * {@link ProductStorage.StorageFederate}. It will log information about any callbacks it
+ * {@link PociagFederate}. It will log information about any callbacks it
  * receives, thus demonstrating how to deal with the provided callback information.
  */
 public class PociagFederateAmbassador extends NullFederateAmbassador
@@ -35,7 +35,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador
 	//----------------------------------------------------------
 	//                   INSTANCE VARIABLES
 	//----------------------------------------------------------
-	private ProductStorage.StorageFederate federate;
+	private PociagFederate federate;
 
 	// these variables are accessible in the package
 	protected double federateTime        = 0.0;
@@ -54,7 +54,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
 
-	public PociagFederateAmbassador(ProductStorage.StorageFederate federate )
+	public PociagFederateAmbassador(PociagFederate federate )
 	{
 		this.federate = federate;
 	}
@@ -87,7 +87,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador
 	public void announceSynchronizationPoint( String label, byte[] tag )
 	{
 		log( "Synchronization point announced: " + label );
-		if( label.equals(Pociag.PociagFederate.READY_TO_RUN) )
+		if( label.equals(PociagFederate.READY_TO_RUN) )
 			this.isAnnounced = true;
 	}
 
@@ -95,7 +95,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador
 	public void federationSynchronized( String label, FederateHandleSet failed )
 	{
 		log( "Federation Synchronized: " + label );
-		if( label.equals(ProductStorage.PociagFederate.READY_TO_RUN) )
+		if( label.equals(PociagFederate.READY_TO_RUN) )
 			this.isReadyToRun = true;
 	}
 
@@ -287,6 +287,11 @@ public class PociagFederateAmbassador extends NullFederateAmbassador
 				builder.append( " bytes" );
 				builder.append( "\n" );
 			}
+		}
+
+		if( interactionClass.equals(federate.addProductsHandle) )
+		{
+			builder.append( " obsluguje" );
 		}
 
 		log( builder.toString() );

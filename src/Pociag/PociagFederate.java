@@ -313,7 +313,6 @@ public class PociagFederate
 		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
 		attributes.add( storageMaxHandle );
 		attributes.add( storageAvailableHandle );
-//
 		rtiamb.publishObjectClassAttributes( storageHandle, attributes );
 
 		//get count parameter for ProductsManagment Interaction

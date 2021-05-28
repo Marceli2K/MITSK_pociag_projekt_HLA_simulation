@@ -305,7 +305,6 @@ public class GUIFederate
 //		publish AddProducts Interaction
 		String iname = "HLAinteractionRoot.ProductsManagment.AddProducts";
 		addProductsHandle = rtiamb.getInteractionClassHandle( iname );
-		// do the publication
 		rtiamb.publishInteractionClass(addProductsHandle);
 
 	}
