@@ -12,7 +12,7 @@
  *   (that goes for your lawyer as well)
  *
  */
-package Pociag;
+package Pasazer;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
@@ -31,26 +31,20 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class PociagFederate {
-    //----------------------------------------------------------
-    //                    STATIC VARIABLES
-    //----------------------------------------------------------
-    /**
-     * The number of times we will update our attributes and send an interaction
-     */
-    public static final int ITERATIONS = 20;
 
+public class PasazerFederate {
     /**
      * The sync point all federates will sync up on before starting
      */
     public static final String READY_TO_RUN = "ReadyToRun";
-    public InteractionClassHandle SzukajMiejscaHandle;
+//	public InteractionClassHandle addNewPasazerHandle;
+//	public ParameterHandle countNewPasazerHandle;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
-    private PociagFederateAmbassador fedamb;  // created when we connect
+    private PasazerFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
 
@@ -58,13 +52,12 @@ public class PociagFederate {
     protected ObjectClassHandle storageHandle;
     protected AttributeHandle storageMaxHandle;
     protected AttributeHandle storageAvailableHandle;
-    protected InteractionClassHandle AddPasazerHandle;
-    protected InteractionClassHandle getProductsHandle;
-    protected ParameterHandle countHandle;
-    private InteractionClassHandle newPasazerHandle;
-    private ParameterHandle newClientInteractionClassClientIdParameterHandle;
-//    private InteractionClassHandle SzukajMiejscaHandle;
+    protected InteractionClassHandle SzukajMiejscaHandle;
 
+    protected int storageMax = 0;
+    protected int storageAvailable = 0;
+    protected InteractionClassHandle addNewPasazerHandle;
+    protected ParameterHandle countNewPasazerHandle;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -77,7 +70,7 @@ public class PociagFederate {
      * This is just a helper method to make sure all logging it output in the same form
      */
     private void log(String message) {
-        System.out.println("PociagFederate   : " + message);
+        System.out.println("PasazerFederate   : " + message);
     }
 
     /**
@@ -113,7 +106,7 @@ public class PociagFederate {
 
         // connect
         log("Connecting...");
-        fedamb = new PociagFederateAmbassador(this);
+        fedamb = new PasazerFederateAmbassador(this);
         rtiamb.connect(fedamb, CallbackModel.HLA_EVOKED);
 
         //////////////////////////////
@@ -140,8 +133,9 @@ public class PociagFederate {
         ////////////////////////////
         // 4. join the federation //
         ////////////////////////////
+
         rtiamb.joinFederationExecution(federateName,            // name for the federate
-                "PociagFederate",   // federate type
+                "Pasazer",   // federate type
                 "PociagFederation"     // name of federation
         );           // modules we want to add
 
@@ -196,39 +190,29 @@ public class PociagFederate {
         log("Published and Subscribed");
 
         /////////////////////////////////////
-        // 9. register an object to update //
-        /////////////////////////////////////
-        ObjectInstanceHandle objectHandle = this.rtiamb.registerObjectInstance(this.storageHandle);
-        log("Registered Pociag, handle=" + objectHandle);
-
-        /////////////////////////////////////
         // 10. do the main simulation loop //
         /////////////////////////////////////
-        // here is where we do the meat of our work. in each iteration, we will
-        // update the attribute values of the object we registered, and will
-        // send an interaction.
-        Pociag pociag = new Pociag(10);
+        Pasazer pasazer = new Pasazer();
         while (fedamb.isRunning) {
-            // update ProductsStorage parameters max and available to current values
-            AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-            HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE(Pociag.getInstance().getMax());
-            attributes.put(storageMaxHandle, maxValue.toByteArray());
+//			int consumed = pasazer.consume();
+//			if(storageAvailable - consumed >= 0 ) {
+//				ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
+//				ParameterHandle addProductsCountHandle = rtiamb.getParameterHandle(SzukajMiejscaHandle, "count");
+//				HLAinteger32BE count = encoderFactory.createHLAinteger32BE(1);
+//				parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
+//				rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
 
-            HLAinteger32BE availableValue = encoderFactory.createHLAinteger32BE(Pociag.getInstance().getAvailable());
-            attributes.put(storageAvailableHandle, availableValue.toByteArray());
+            ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
+            rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
+//            advanceTime(pasazer.getTimeToNext());
+            log( "Time Advanced to " + fedamb.federateTime );
 
-            rtiamb.updateAttributeValues(objectHandle, attributes, generateTag());
+//			else
+            // 9.3 request a time advance and wait until we get it
 
-            advanceTime(1);
-            log("Time Advanced to " + fedamb.federateTime);
         }
 
-        //////////////////////////////////////
-        // 11. delete the object we created //
-        //////////////////////////////////////
-//		deleteObject( objectHandle );
-//		log( "Deleted Object, handle=" + objectHandle );
 
         ////////////////////////////////////
         // 12. resign from the federation //
@@ -293,33 +277,33 @@ public class PociagFederate {
      * federates produce it.
      */
     private void publishAndSubscribe() throws RTIexception {
-//		publish ProductsStrorage object
-        this.storageHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Pociag");
-        this.storageMaxHandle = rtiamb.getAttributeHandle(storageHandle, "max");
-        this.storageAvailableHandle = rtiamb.getAttributeHandle(storageHandle, "available");
-//		// package the information into a handle set
-        AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-        attributes.add(storageMaxHandle);
-        attributes.add(storageAvailableHandle);
-//
-        rtiamb.publishObjectClassAttributes(storageHandle, attributes);
-
-//        subscribe szukaj miejsca
-        String inames = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
-        SzukajMiejscaHandle = rtiamb.getInteractionClassHandle( inames );
-
-        //get count parameter for PasazerManagment Interaction
-        countHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SzukajMiejsca"), "count");
+        System.out.println("publish and subscibe");
+        // subscribe for ProductsStorage
+		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Pociag" );
+		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "max" );
+		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "available" );
 
 
-        rtiamb.subscribeInteractionClass(SzukajMiejscaHandle);
+        // subscribe NewPasazer Interaction
+        String inames = "HLAinteractionRoot.PasazerManagment.NewPasazer";
+        this.addNewPasazerHandle = this.rtiamb.getInteractionClassHandle(inames);
+        this.countNewPasazerHandle = rtiamb.getParameterHandle(this.addNewPasazerHandle, "countNewPasazer");
+        this.rtiamb.subscribeInteractionClass(this.addNewPasazerHandle);
+        System.out.println("xxx " + this.addNewPasazerHandle);
 
 
-//        { // subscribe for AddPasazer interaction
-//            String iname = "HLAinteractionRoot.PasazerManagment.AddPasazer";
-//            AddPasazerHandle = rtiamb.getInteractionClassHandle(iname);
-//            rtiamb.subscribeInteractionClass(AddPasazerHandle);
-//        }
+////		// package the information into a handle set
+//		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
+//		attributes.add( storageMaxHandle );
+//		attributes.add( storageAvailableHandle );
+//		rtiamb.subscribeObjectClassAttributes(storageHandle, attributes);
+
+
+////		publish GetProducts interaction
+        String iname = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
+        this.SzukajMiejscaHandle = rtiamb.getInteractionClassHandle(iname);
+        // do the publication
+        this.rtiamb.publishInteractionClass(this.SzukajMiejscaHandle);
 
 
     }
@@ -339,7 +323,6 @@ public class PociagFederate {
         // LRC to start delivering callbacks to the federate
         while (fedamb.isAdvancing) {
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
-
         }
     }
 
@@ -356,14 +339,14 @@ public class PociagFederate {
     //----------------------------------------------------------
     public static void main(String[] args) {
         // get a federate name, use "exampleFederate" as default
-        String federateName = "PociagFederate";
+        String federateName = "Pasazer";
         if (args.length != 0) {
             federateName = args[0];
         }
 
         try {
             // run the example federate
-            new PociagFederate().runFederate(federateName);
+            new PasazerFederate().runFederate(federateName);
         } catch (Exception rtie) {
             // an exception occurred, just log the information and exit
             rtie.printStackTrace();

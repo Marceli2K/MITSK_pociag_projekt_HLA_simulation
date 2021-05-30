@@ -1,5 +1,9 @@
 package GUI;
 
+import Pasazer.Pasazer;
+import Pociag.Wagon;
+
+import java.util.List;
 import java.util.Random;
 
 /**
@@ -8,17 +12,18 @@ import java.util.Random;
 public class GUI {
     int timeToNext;
     private Random random;
-
+    private List<Pasazer> wagonList;
     public GUI() {
         random = new Random();
         timeToNext = generateTimeToNext();
     }
 
-    public int produce()
+    public int wsiadanie()
     {
+        int czasPoprzeniejStacji = 0;
         timeToNext=generateTimeToNext();
         int count = random.nextInt(4)+1;
-        System.out.println("I produced " + count + ". Next I'll produce in " + timeToNext);
+        System.out.println("Wsiadlo  " + count + " nowych pasazerow. Nastepny przystanek za: " + timeToNext);
         return count;
     }
 

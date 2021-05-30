@@ -17,10 +17,7 @@ package GUI;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -31,6 +28,17 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+
+/*
+
+
+* TO DO LIST
+* DOWIEDZIEC SIE CZEMU SIE PIERDOLI ADVANCE TIME
+* DOWIEDZIEC SIE CZEMU W PASAZERZE NIC NIE DZIALA
+* DOWIEDZIEC SIE CO DALEJ ROBIC ZEBY TO ZROBIC :<
+*
+*
+* */
 
 public class GUIFederate
 {
@@ -44,15 +52,16 @@ public class GUIFederate
 	private GUIFederateAmbassador fedamb;  // created when we connect
 	private HLAfloat64TimeFactory timeFactory; // set when we join
 	protected EncoderFactory encoderFactory;     // set when we join
-
+	protected int liczbaPasazerow = 0;
 	// caches of handle types - set once we join a federation
 	protected ObjectClassHandle storageHandle;
 	protected AttributeHandle storageMaxHandle;
 	protected AttributeHandle storageAvailableHandle;
-	protected InteractionClassHandle addProductsHandle;
+	protected InteractionClassHandle addNewPasazerHandle;
 
-	protected int storageMax = 0;
-	protected int storageAvailable = 0;
+	protected int maksymalnaLiczbaMiejscSiedzacych = 0;
+	protected int liczbaDostepnychMiejscSiedzacych = 0;
+	private ParameterHandle countNewPasazerHandle;
 	//----------------------------------------------------------
 	//                      CONSTRUCTORS
 	//----------------------------------------------------------
@@ -65,7 +74,7 @@ public class GUIFederate
 	 */
 	private void log( String message )
 	{
-		System.out.println( "GUIFederate   : " + message );
+		System.out.println( "ProducerFederate   : " + message );
 	}
 
 	/**
@@ -117,9 +126,9 @@ public class GUIFederate
 		try
 		{
 			URL[] modules = new URL[]{
-			    (new File("foms/pociag.xml")).toURI().toURL(),
+			    (new File("foms/ProducerConsumer.xml")).toURI().toURL(),
 			};
-			
+
 			rtiamb.createFederationExecution( "PociagFederation", modules );
 			log( "Created Federation" );
 		}
@@ -133,13 +142,13 @@ public class GUIFederate
 			urle.printStackTrace();
 			return;
 		}
-		
+
 		////////////////////////////
 		// 4. join the federation //
 		////////////////////////////
 
 		rtiamb.joinFederationExecution( federateName,            // name for the federate
-		                                "gui",   // federate type
+		                                "GUI",   // federate type
 		                                "PociagFederation"     // name of federation
 		                                 );           // modules we want to add
 
@@ -203,26 +212,19 @@ public class GUIFederate
 		GUI gui = new GUI();
 		while( fedamb.isRunning )
 		{
-			int producedValue = gui.produce();
-			if(storageAvailable + producedValue <= storageMax ) {
-				ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
-				ParameterHandle addProductsCountHandle = rtiamb.getParameterHandle(addProductsHandle, "count");
-				HLAinteger32BE count = encoderFactory.createHLAinteger32BE(producedValue);
-				parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
-				rtiamb.sendInteraction(addProductsHandle, parameterHandleValueMap, generateTag());
-			}
 
-			else
-			{
-				log("Producing canceled because of full storage.");
-			}
-			// 9.3 request a time advance and wait until we get it
+//			PASAZEROWIE SIADAJA ZAWSZE DO POCIAGU ALE NIE ZAWSZE ZNAJDUJA MIEJSCE
+			int liczbaWsiadajacychPasazerow = gui.wsiadanie();
+			adddNewPasazer(liczbaWsiadajacychPasazerow); // dodawanie nowych pasazerow do pociagu
+			log( "Liczba wsiadajacyh pasazerow to  :  " + liczbaWsiadajacychPasazerow );
+
 			advanceTime(gui.getTimeToNext());
+//			advanceTime(2);
 			log( "Time Advanced to " + fedamb.federateTime );
 		}
 
 
-		////////////////////////////////////////////////
+		////////////////////////////////////
 		// 12. resign from the federation //
 		////////////////////////////////////
 		rtiamb.resignFederationExecution( ResignAction.DELETE_OBJECTS );
@@ -254,7 +256,22 @@ public class GUIFederate
 	/**
 	 * This method will attempt to enable the various time related properties for
 	 * the federate
+	 * @param liczbaWsiadajacychPasazerow
 	 */
+	private void adddNewPasazer(int liczbaWsiadajacychPasazerow) throws Exception {
+		liczbaPasazerow = liczbaPasazerow + liczbaWsiadajacychPasazerow;
+//		publishAndSubscribe();
+		System.out.println("XD1");
+
+		ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
+		ParameterHandle addNewPasazerCountHandle = rtiamb.getParameterHandle(addNewPasazerHandle, "countNewPasazer");
+		HLAinteger32BE count = encoderFactory.createHLAinteger32BE(liczbaWsiadajacychPasazerow);
+		parameterHandleValueMap.put(addNewPasazerCountHandle, count.toByteArray());
+		rtiamb.sendInteraction(this.addNewPasazerHandle, parameterHandleValueMap, generateTag());
+
+		System.out.println("XD");
+
+	}
 	private void enableTimePolicy() throws Exception
 	{
 		// NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
@@ -269,7 +286,7 @@ public class GUIFederate
 		this.rtiamb.enableTimeRegulation( lookahead );
 
 		// tick until we get the callback
-		while( fedamb.isRegulating == false )
+		while(!fedamb.isRegulating)
 		{
 			rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
 		}
@@ -280,7 +297,7 @@ public class GUIFederate
 		this.rtiamb.enableTimeConstrained();
 		
 		// tick until we get the callback
-		while( fedamb.isConstrained == false )
+		while(!fedamb.isConstrained)
 		{
 			rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
 		}
@@ -293,20 +310,28 @@ public class GUIFederate
 	 */
 	private void publishAndSubscribe() throws RTIexception
 	{
-		// subscribe for storage
-		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Pociag" );
-		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "liczbaMiejsc" );
-		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "liczbaWagonow" );
-//		// package the information into a handle set
-		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-		attributes.add( storageMaxHandle );
-		attributes.add( storageAvailableHandle );
-		rtiamb.subscribeObjectClassAttributes( storageHandle, attributes );
+		System.out.println("wait for publish");
+//		// subscribe for storage
+//		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Pociag" );
+//		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "max" );
+//		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "available" );
+////		// package the information into a handle set
+//		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
+//		attributes.add( storageMaxHandle );
+//		attributes.add( storageAvailableHandle );
+//		rtiamb.subscribeObjectClassAttributes( storageHandle, attributes );
 
-//		publish AddProducts Interaction
-		String iname = "HLAinteractionRoot.ProductsManagment.AddProducts";
-		addProductsHandle = rtiamb.getInteractionClassHandle( iname );
-		rtiamb.publishInteractionClass(addProductsHandle);
+		//get count parameter for new pasazer Interaction
+
+//        publish new pasazer
+
+		this.addNewPasazerHandle = this.rtiamb.getInteractionClassHandle( "HLAinteractionRoot.NewPasazer" );
+		this.countNewPasazerHandle = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer"), "countNewPasazer");
+		System.out.println("XXXX : " + countNewPasazerHandle);
+		System.out.println("xxx " + this.countNewPasazerHandle);
+
+		// do the publication
+		this.rtiamb.publishInteractionClass(this.addNewPasazerHandle);
 
 	}
 	/**
@@ -320,14 +345,19 @@ public class GUIFederate
 		fedamb.isAdvancing = true;
 		HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime + timestep );
 		rtiamb.timeAdvanceRequest( time );
-		
+		System.out.println("aaa:"+ time);
 		// wait for the time advance to be granted. ticking will tell the
 		// LRC to start delivering callbacks to the federate
 		while( fedamb.isAdvancing )
 		{
-			rtiamb.evokeMultipleCallbacks( 0.1, 0.2 );
+			boolean xd = rtiamb.evokeMultipleCallbacks(0.1, 0.2);
+			System.out.println(xd);
+			if(xd){
+				fedamb.isAdvancing = false;
+			}
 		}
 	}
+	private int getLiczbaPasazerow(){return liczbaPasazerow;}
 
 	private short getTimeAsShort()
 	{

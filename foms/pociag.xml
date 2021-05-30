@@ -1,272 +1,357 @@
 <?xml version='1.0' encoding='utf-8'?>
 <objectModel
- xmlns='http://standards.ieee.org/IEEE1516-2010'
- xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
- xsi:schemaLocation='http://standards.ieee.org/IEEE1516-2010 http://standards.ieee.org/downloads/1516/1516.2-2010/IEEE1516-DIF-2010.xsd'  >
-	<modelIdentification>
-		<name>ProducerConsumer</name>
-		<type>FOM</type>
-		<version>1.0</version>
-	</modelIdentification>
-	<objects>
-		<objectClass>
-			<name>HLAobjectRoot</name>
-			<objectClass>
-				<name>GUI</name>
-				<sharing>PublishSubscribe</sharing>
-				<semantics>Graficzny interfejs</semantics>
-				<attribute>
-					<name>liczbaPrzedzialow</name>
-					<dataType>HLAinteger32BE</dataType>
-					<updateType>Conditional</updateType>
-					<updateCondition>On Change</updateCondition>
-					<ownership>Divest</ownership>
-					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAreliable</transportation>
-					<order>Receive</order>
-					<semantics>Liczba przedzialow w pociagu</semantics>
-				</attribute>
-			</objectClass>
-			<objectClass>
-				<name>Pociag</name>
-				<sharing>PublishSubscribe</sharing>
-				<semantics>Srodek transportu</semantics>
-				<attribute>
-					<name>liczbaPrzedzialow</name>
-					<dataType>HLAinteger32BE</dataType>
-					<updateType>Conditional</updateType>
-					<updateCondition>On Change</updateCondition>
-					<ownership>Divest</ownership>
-					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAreliable</transportation>
-					<order>Receive</order>
-					<semantics>Liczba przedzialow w pociagu</semantics>
-				</attribute>
-				<attribute>
-					<name>liczbaWagonow</name>
-					<dataType>HLAinteger32BE</dataType>
-					<updateType>Static</updateType>
-					<updateCondition>On Change</updateCondition>
-					<ownership>Divest</ownership>
-					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAreliable</transportation>
-					<order>Receive</order>
-					<semantics>Liczba wagonow w pociagu</semantics>
-				</attribute>
-				<attribute>
-					<name>liczbaMiejsc</name>
-					<dataType>HLAinteger32BE</dataType>
-					<updateType>Static</updateType>
-					<updateCondition>On Change</updateCondition>
-					<ownership>Divest</ownership>
-					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAreliable</transportation>
-					<order>Receive</order>
-					<semantics>Liczba miejsc w pociagu</semantics>
-				</attribute>
-				<attribute>
-					<name>liczbaMiejscWolnych</name>
-					<dataType>HLAinteger32BE</dataType>
-					<updateType>Static</updateType>
-					<updateCondition>On Change</updateCondition>
-					<ownership>Divest</ownership>
-					<sharing>PublishSubscribe</sharing>
-					<transportation>HLAreliable</transportation>
-					<order>Receive</order>
-					<semantics>Liczba wolnych miejsc w pociagu</semantics>
-				</attribute>
-			</objectClass>
-		</objectClass>
-	</objects>
-	<interactions>
-		<interactionClass>
-			<name>HLAinteractionRoot</name>
-			<interactionClass>
-				<name>ZwolnijMiejsce</name>
-				<sharing>PublishSubscribe</sharing>
-				<transportation>HLAreliable</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenia zwolnienia wolnego miejsca</semantics>
-				<parameter>
-					<name>idMiejsca</name>
-					<dataType>HLAinteger32BE</dataType>
-						<semantics>Identyfikator miejsca</semantics>
-				</parameter>
-				<parameter>
-					<name>idPasazera</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator pasazera</semantics>
-				</parameter>
-				<parameter>
-					<name>czyWolne</name>
-					<dataType>HLAboolean</dataType>
-					<semantics>Wartosc boolowska stwierdzająca czy miejsce jest wolne</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>ZajmijMiejsce</name>
-				<sharing>PublishSubscribe</sharing>
-				<transportation>HLAreliable</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenia zwolnienia wolnego miejsca</semantics>
-				<parameter>
-					<name>idMiejsca</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator miejsca</semantics>
-				</parameter>
-				<parameter>
-					<name>idPasazera</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator pasazera</semantics>
-				</parameter>
-				<parameter>
-					<name>czyWolne</name>
-					<dataType>HLAboolean</dataType>
-					<semantics>Wartosc boolowska stwierdzająca czy miejsce jest wolne</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>ZajeteMiejsce</name>
-				<sharing>PublishSubscribe</sharing>
-				<transportation>HLAreliable</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenie zmiany statusu miejsca</semantics>
-				<parameter>
-					<name>idMiejsca</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator pasazera</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>WolneMiejsce</name>
-				<sharing>PublishSubscribe</sharing>
-				<transportation>HLAreliable</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenie zmiany statusu miejsca</semantics>
-				<parameter>
-					<name>idMiejsca</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator miejsca</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>SprawdzenieBiletu</name>
-				<sharing>PublishSubscribe</sharing>
-				<transportation>HLAreliable</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenie srawdzenia biletu</semantics>
-				<parameter>
-					<name>czySkasowany</name>
-					<dataType>HLAboolean</dataType>
-					<semantics>Sprawdzenie posiadania biletu</semantics>
-				</parameter>
-				<parameter>
-					<name>idPasazer</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator pasazera</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>SkasujBilet</name>
-				<sharing>PublishSubscribe</sharing>
-				<transportation>HLAreliable</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenie skasowania biletu</semantics>
-				<parameter>
-					<name>czySkasowany</name>
-					<dataType>HLAboolean</dataType>
-					<semantics>Sprawdzenie posiadania biletu</semantics>
-				</parameter>
-				<parameter>
-					<name>idPasazer</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator pasazera</semantics>
-				</parameter>
-				<parameter>
-					<name>idMiejsca</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator miejsca</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>Wsiadz</name>
-				<sharing>Publish</sharing>
-				<transportation>HLAbestEffort</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenia wejscia do pociagu</semantics>
-				<parameter>
-					<name>idWagon</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator wagonu</semantics>
-				</parameter>
-				<parameter>
-					<name>idPasazer</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator pasazera</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>Wysiadz</name>
-				<sharing>Publish</sharing>
-				<transportation>HLAbestEffort</transportation>
-				<order>Receive</order>
-				<semantics>Zdarzenia wyjscia z pociagu</semantics>
-				<parameter>
-					<name>idWagon</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator wagonu</semantics>
-				</parameter>
-				<parameter>
-					<name>idPasazer</name>
-					<dataType>HLAinteger32BE</dataType>
-					<semantics>Identyfikator pasazera</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>PrawdBezBiletu</name>
-				<sharing>Publish</sharing>
-				<transportation>HLAbestEffort</transportation>
-				<order>Receive</order>
-				<semantics>Prawdopodobienstwo przejchania bez biletu</semantics>
-				<parameter>
-					<name>prawdBezBiletu</name>
-					<dataType> HLAfloat64BE</dataType>
-					<semantics>Prawdopodobienstwo przejchania bez biletu</semantics>
-				</parameter>
-			</interactionClass>
-			<interactionClass>
-				<name>PrawdZajeciaMiejsca</name>
-				<sharing>Publish</sharing>
-				<transportation>HLAbestEffort</transportation>
-				<order>Receive</order>
-				<semantics>Prawdopodobienstwo Zajecia miejsca</semantics>
-				<parameter>
-					<name>prawdZajeciaMiejsca</name>
-					<dataType> HLAfloat64BE</dataType>
-					<semantics>Prawdopodobienstwo Zajecia miejsca</semantics>
-				</parameter>
+        xmlns='http://standards.ieee.org/IEEE1516-2010'
+        xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+        xsi:schemaLocation='http://standards.ieee.org/IEEE1516-2010 http://standards.ieee.org/downloads/1516/1516.2-2010/IEEE1516-DIF-2010.xsd'>
+    <modelIdentification>
+        <name>ProducerConsumer</name>
+        <type>FOM</type>
+        <version>1.0</version>
+    </modelIdentification>
+    <objects>
+        <objectClass>
+            <name>HLAobjectRoot</name>
+            <objectClass>
+                <name>GUI</name>
+                <sharing>PublishSubscribe</sharing>
+                <semantics>Graficzny interfejs</semantics>
+                <attribute>
+                    <name>liczbaPrzedzialow</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba przedzialow w pociagu</semantics>
+                </attribute>
+            </objectClass>
+            <objectClass>
+                <name>Pociag</name>
+                <sharing>PublishSubscribe</sharing>
+                <semantics>Srodek transportu</semantics>
+                <attribute>
+                    <name>liczbaPrzedzialow</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba przedzialow w pociagu</semantics>
+                </attribute>
+                <attribute>
+                    <name>liczbaWagonow</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba wagonow w pociagu</semantics>
+                </attribute>
+                <attribute>
+                    <name>liczbaMiejsc</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba miejsc w pociagu</semantics>
+                </attribute>
+                <attribute>
+                    <name>liczbaMiejscWolnych</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba wolnych miejsc w pociagu</semantics>
+                </attribute>
+            </objectClass>
+            <objectClass>
+                <name>Pasazer</name>
+                <sharing>PublishSubscribe</sharing>
+                <semantics>Pasazer pociagu</semantics>
+                <attribute>
+                    <name>liczbaPrzedzialow</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Conditional</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba przedzialow w pociagu</semantics>
+                </attribute>
+                <attribute>
+                    <name>liczbaWagonow</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba wagonow w pociagu</semantics>
+                </attribute>
+                <attribute>
+                    <name>liczbaMiejsc</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba miejsc w pociagu</semantics>
+                </attribute>
+                <attribute>
+                    <name>liczbaMiejscWolnych</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <updateType>Static</updateType>
+                    <updateCondition>On Change</updateCondition>
+                    <ownership>Divest</ownership>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Liczba wolnych miejsc w pociagu</semantics>
+                </attribute>
+            </objectClass>
+        </objectClass>
+    </objects>
+    <interactions>
+        <interactionClass>
+            <name>HLAinteractionRoot</name>
+            <interactionClass>
+                <name>PasazerManagment</name>
+                <sharing>PublishSubscribe</sharing>
+                <transportation>HLAreliable</transportation>
+                <order>Receive</order>
+                <semantics>Interackcje_Paszera</semantics>
+                <interactionClass>
+                    <name>ZajmijMiejsce</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Zdarzenia zwolnienia wolnego miejsca</semantics>
+                    <parameter>
+                        <name>idMiejsca</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator miejsca</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>idPasazera</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator pasazera</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>czyWolne</name>
+                        <dataType>HLAboolean</dataType>
+                        <semantics>Wartosc boolowska stwierdzająca czy miejsce jest wolne</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
+                    <name>ZwolnijMiejsce</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Zdarzenia zwolnienia wolnego miejsca</semantics>
+                    <parameter>
+                        <name>idMiejsca</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator miejsca</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>idPasazera</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator pasazera</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>czyWolne</name>
+                        <dataType>HLAboolean</dataType>
+                        <semantics>Wartosc boolowska stwierdzająca czy miejsce jest wolne</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
+                    <name>Wsiadz</name>
+                    <sharing>Publish</sharing>
+                    <transportation>HLAbestEffort</transportation>
+                    <order>Receive</order>
+                    <semantics>Zdarzenia wejscia do pociagu</semantics>
+                    <parameter>
+                        <name>idWagon</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator wagonu</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>idPasazer</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator pasazera</semantics>
+                    </parameter>
+                </interactionClass>
+<!--                <interactionClass>-->
+<!--                    <name>Wysiadz</name>-->
+<!--                    <sharing>Publish</sharing>-->
+<!--                    <transportation>HLAbestEffort</transportation>-->
+<!--                    <order>Receive</order>-->
+<!--                    <semantics>Zdarzenia wyjscia z pociagu</semantics>-->
+<!--                    <parameter>-->
+<!--                        <name>idWagon</name>-->
+<!--                        <dataType>HLAinteger32BE</dataType>-->
+<!--                        <semantics>Identyfikator wagonu</semantics>-->
+<!--                    </parameter>-->
+<!--                    <parameter>-->
+<!--                        <name>idPasazer</name>-->
+<!--                        <dataType>HLAinteger32BE</dataType>-->
+<!--                        <semantics>Identyfikator pasazera</semantics>-->
+<!--                    </parameter>-->
+<!--                </interactionClass>-->
+            </interactionClass>
+            <interactionClass>
+                <name>PociagManagment</name>
+                <sharing>PublishSubscribe</sharing>
+                <transportation>HLAreliable</transportation>
+                <order>Receive</order>
+                <semantics>Interackcje_Pociagu</semantics>
+                <parameter>
+                    <name>count</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <semantics>Liczba wsiadajacych pasazerow</semantics>
+                </parameter>
+                <interactionClass>
+                    <name>ZajeteMiejsce</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Zdarzenie zmiany statusu miejsca</semantics>
+                    <parameter>
+                        <name>idMiejsca</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator pasazera</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
+                    <name>WolneMiejsce</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>Receive</order>
+                    <semantics>Zdarzenie zmiany statusu miejsca</semantics>
+                    <parameter>
+                        <name>idMiejsca</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Identyfikator miejsca</semantics>
+                    </parameter>
+                </interactionClass>
+            </interactionClass>
+            <interactionClass>
+                <name>SprawdzenieBiletu</name>
+                <sharing>PublishSubscribe</sharing>
+                <transportation>HLAreliable</transportation>
+                <order>Receive</order>
+                <semantics>Zdarzenie srawdzenia biletu</semantics>
+                <parameter>
+                    <name>czySkasowany</name>
+                    <dataType>HLAboolean</dataType>
+                    <semantics>Sprawdzenie posiadania biletu</semantics>
+                </parameter>
+                <parameter>
+                    <name>idPasazer</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <semantics>Identyfikator pasazera</semantics>
+                </parameter>
+            </interactionClass>
+            <interactionClass>
+                <name>SkasujBilet</name>
+                <sharing>PublishSubscribe</sharing>
+                <transportation>HLAreliable</transportation>
+                <order>Receive</order>
+                <semantics>Zdarzenie skasowania biletu</semantics>
+                <parameter>
+                    <name>czySkasowany</name>
+                    <dataType>HLAboolean</dataType>
+                    <semantics>Sprawdzenie posiadania biletu</semantics>
+                </parameter>
+                <parameter>
+                    <name>idPasazer</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <semantics>Identyfikator pasazera</semantics>
+                </parameter>
+                <parameter>
+                    <name>idMiejsca</name>
+                    <dataType>HLAinteger32BE</dataType>
+                    <semantics>Identyfikator miejsca</semantics>
+                </parameter>
+            </interactionClass>
 
-			</interactionClass>
-		</interactionClass>
-	</interactions>
-	<dimensions/>
-	<synchronizations>
-		<synchronizationPoint>
-			<label>ReadyRoRun</label>
-			<dataType>NA</dataType>
-			<capability>NA</capability>
-			<semantics>Waiting for each federate joining</semantics>
-		</synchronizationPoint>
-	</synchronizations>
-	<transportations/>
-	<updateRates/>
-	<dataTypes>
-		<basicDataRepresentations/>
-		<simpleDataTypes/>
-		<enumeratedDataTypes/>
-		<arrayDataTypes/>
-		<fixedRecordDataTypes/>
-		<variantRecordDataTypes/>
-	</dataTypes>
-	<notes/>
+            <interactionClass>
+                <name>PrawdBezBiletu</name>
+                <sharing>Publish</sharing>
+                <transportation>HLAbestEffort</transportation>
+                <order>Receive</order>
+                <semantics>Prawdopodobienstwo przejchania bez biletu</semantics>
+                <parameter>
+                    <name>prawdBezBiletu</name>
+                    <dataType>HLAfloat64BE</dataType>
+                    <semantics>Prawdopodobienstwo przejchania bez biletu</semantics>
+                </parameter>
+            </interactionClass>
+            <interactionClass>
+                <name>PrawdZajeciaMiejsca</name>
+                <sharing>Publish</sharing>
+                <transportation>HLAbestEffort</transportation>
+                <order>Receive</order>
+                <semantics>Prawdopodobienstwo Zajecia miejsca</semantics>
+                <parameter>
+                    <name>prawdZajeciaMiejsca</name>
+                    <dataType>HLAfloat64BE</dataType>
+                    <semantics>Prawdopodobienstwo Zajecia miejsca</semantics>
+                </parameter>
+
+            </interactionClass>
+        </interactionClass>
+    </interactions>
+    <dimensions/>
+    <synchronizations>
+        <synchronizationPoint>
+            <label>ReadyRoRun</label>
+            <dataType>NA</dataType>
+            <capability>NA</capability>
+            <semantics>Waiting for each federate joining</semantics>
+        </synchronizationPoint>
+    </synchronizations>
+    <transportations/>
+    <updateRates/>
+    <dataTypes>
+        <basicDataRepresentations/>
+        <simpleDataTypes/>
+        <enumeratedDataTypes/>
+        <arrayDataTypes/>
+        <fixedRecordDataTypes>
+            <fixedRecordData>
+                <name>Pasazer</name>
+                <encoding>HLAfixedRecord</encoding>
+                <semantics>Obiekt pasazera</semantics>
+                <field>
+                    <name>clientID</name>
+                    <dataType>HLAinteger64BE</dataType>
+                    <semantics>Numer ID klienta</semantics>
+                </field>
+                <field>
+                    <name>wantedCash</name>
+                    <dataType>HLAinteger64BE</dataType>
+                    <semantics>Ilość pieniędzy którą chce wypłacić klient</semantics>
+                </field>
+            </fixedRecordData>
+        </fixedRecordDataTypes>
+        <variantRecordDataTypes/>
+    </dataTypes>
+    <notes/>
 </objectModel>

@@ -28,7 +28,6 @@ import hla.rti1516e.ParameterHandleValueMap;
 import hla.rti1516e.SynchronizationPointFailureReason;
 import hla.rti1516e.TransportationTypeHandle;
 import hla.rti1516e.encoding.DecoderException;
-import hla.rti1516e.encoding.HLAinteger16BE;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
@@ -215,7 +214,7 @@ public class GUIFederateAmbassador extends NullFederateAmbassador
 					e.printStackTrace();
 				}
 				builder.append( available.getValue() );
-				federate.storageAvailable = available.getValue();
+				federate.liczbaDostepnychMiejscSiedzacych = available.getValue();
 			}
 			else if( attributeHandle.equals(federate.storageMaxHandle) )
 			{
@@ -229,7 +228,7 @@ public class GUIFederateAmbassador extends NullFederateAmbassador
 					e.printStackTrace();
 				}
 				builder.append( max.getValue() );
-				federate.storageMax = max.getValue();
+				federate.maksymalnaLiczbaMiejscSiedzacych = max.getValue();
 			}
 			else
 			{
@@ -280,7 +279,7 @@ public class GUIFederateAmbassador extends NullFederateAmbassador
 		
 		// print the handle
 		builder.append( " handle=" + interactionClass );
-		if( interactionClass.equals(federate.addProductsHandle) )
+		if( interactionClass.equals(federate.addNewPasazerHandle) )
 		{
 			builder.append( " (addProductsHandle)" );
 		}

@@ -12,34 +12,24 @@
  *   (that goes for your lawyer as well)
  *
  */
-package Pociag;
+package Pasazer;
 
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.FederateHandleSet;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.LogicalTime;
-import hla.rti1516e.NullFederateAmbassador;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.OrderType;
-import hla.rti1516e.ParameterHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.SynchronizationPointFailureReason;
-import hla.rti1516e.TransportationTypeHandle;
+import GUI.GUIFederate;
+import Pociag.Pociag;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.encoding.HLAinteger64BE;
 import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger64BE;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
- * {@link PociagFederate}. It will log information about any callbacks it
+ * {@link GUIFederate}. It will log information about any callbacks it
  * receives, thus demonstrating how to deal with the provided callback information.
  */
-public class PociagFederateAmbassador extends NullFederateAmbassador {
+public class PasazerFederateAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
@@ -47,7 +37,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
-    private PociagFederate federate;
+    private PasazerFederate federate;
 
     // these variables are accessible in the package
     protected double federateTime = 0.0;
@@ -60,13 +50,14 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     protected boolean isAnnounced = false;
     protected boolean isReadyToRun = false;
 
+
     protected boolean isRunning = true;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
 
-    public PociagFederateAmbassador(PociagFederate federate) {
+    public PasazerFederateAmbassador(PasazerFederate federate) {
         this.federate = federate;
     }
 
@@ -94,14 +85,14 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     @Override
     public void announceSynchronizationPoint(String label, byte[] tag) {
         log("Synchronization point announced: " + label);
-        if (label.equals(PociagFederate.READY_TO_RUN))
+        if (label.equals(GUIFederate.READY_TO_RUN))
             this.isAnnounced = true;
     }
 
     @Override
     public void federationSynchronized(String label, FederateHandleSet failed) {
         log("Federation Synchronized: " + label);
-        if (label.equals(PociagFederate.READY_TO_RUN))
+        if (label.equals(GUIFederate.READY_TO_RUN))
             this.isReadyToRun = true;
     }
 
@@ -174,7 +165,9 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
         builder.append(", tag=" + new String(tag));
         // print the time (if we have it) we'll get null if we are just receiving
         // a forwarded call from the other reflect callback above
-
+        if (time != null) {
+            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
+        }
 
         // print the attribute information
         builder.append(", attributeCount=" + theAttributes.size());
@@ -184,6 +177,46 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
             builder.append("\tattributeHandle=");
 
             // if we're dealing with Flavor, decode into the appropriate enum value
+            if (attributeHandle.equals(federate.storageAvailableHandle)) {
+                builder.append(attributeHandle);
+                builder.append(" (Available)    ");
+                builder.append(", attributeValue=");
+                HLAinteger32BE available = new HLA1516eInteger32BE();
+                try {
+                    available.decode(theAttributes.get(attributeHandle));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(available.getValue());
+                federate.storageAvailable = available.getValue();
+            } else if (attributeHandle.equals(federate.storageMaxHandle)) {
+                builder.append(attributeHandle);
+                builder.append(" (Max)");
+                builder.append(", attributeValue=");
+                HLAinteger32BE max = new HLA1516eInteger32BE();
+                try {
+                    max.decode(theAttributes.get(attributeHandle));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(max.getValue());
+                federate.storageMax = max.getValue();
+            } else if (attributeHandle.equals(federate.storageMaxHandle)) {
+                builder.append(attributeHandle);
+                builder.append(" (Max)");
+                builder.append(", attributeValue=");
+                HLAinteger32BE max = new HLA1516eInteger32BE();
+                try {
+                    max.decode(theAttributes.get(attributeHandle));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(max.getValue());
+                federate.storageMax = max.getValue();
+            } else {
+                builder.append(attributeHandle);
+                builder.append(" (Unknown)   ");
+            }
 
             builder.append("\n");
         }
@@ -226,12 +259,12 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
 
         // print the handle
         builder.append(" handle=" + interactionClass);
-        if (interactionClass.equals(federate.AddPasazerHandle)) {
-            builder.append(" (AddProducts)");
-        } else if (interactionClass.equals(federate.getProductsHandle)) {
-            builder.append(" (GetProducts)");
-        } else if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
-            builder.append(" (SzukajMiejsca)");
+        if (interactionClass.equals(this.federate.SzukajMiejscaHandle)) {
+            builder.append(" (Pasazer szuka miejsca)");
+        }
+
+        if (interactionClass.equals(this.federate.addNewPasazerHandle)) {
+            builder.append(" (Dodanie nowego pasazera)");
         }
 
         // print the tag
@@ -245,68 +278,55 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
         // print the parameer information
         builder.append(", parameterCount=" + theParameters.size());
         builder.append("\n");
-        if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
-            System.out.println("pasazer szuka miejsca");
-            Pociag pociag = Pociag.getInstance();
-            System.out.println("wagon list  size : " + pociag.getWagonListSize());
-
-        }
         for (ParameterHandle parameter : theParameters.keySet()) {
-
-            if (parameter.equals(federate.countHandle)) {
-                System.out.println("pasazer szuka miejsca");
-//				HLAinteger64BE clientId = encoderFactory.createHLAinteger64BE();
-//
-//				clientId.decode(theParameters.get(federate.getNewClientInteractionClassClientIdParameterHandle()));
-//
-//				Long clientIdentificationNumber = clientId.getValue();
-//
-//				federate.addClientToQueue(clientIdentificationNumber);
-
-//				log("Received Client " + clientIdentificationNumber);
-                builder.append("\tCOUNT PARAM!");
-                byte[] bytes = theParameters.get(federate.countHandle);
-                HLAinteger32BE count = new HLA1516eInteger32BE();
+            builder.append("XDDDDDDDDDDDD)");
+            if (parameter.equals(federate.countNewPasazerHandle)) {
+                HLAinteger32BE deco = new HLA1516eInteger32BE();
                 try {
-                    count.decode(bytes);
+                    deco.decode(theParameters.get(parameter));
                 } catch (DecoderException e) {
                     e.printStackTrace();
                 }
-                int countValue = count.getValue();
-                System.out.println("xddd" + countValue);
-                builder.append("\tcount Value=" + countValue);
-                if (interactionClass.equals(federate.AddPasazerHandle)) {
-                    Pociag.getInstance().addTo(countValue);
-                } else if (interactionClass.equals(federate.getProductsHandle)) {
-                    Pociag.getInstance().getFrom(countValue);
+                builder.append(deco.getValue());
+                federate.storageMax = deco.getValue();
+                int liczbaPasazerowDoStworzenia = deco.getValue();
+
+                for (int i = 0; i <= liczbaPasazerowDoStworzenia; i++) {
+                    System.out.println("Liczba pasazerow do stworzenia: " + liczbaPasazerowDoStworzenia);
+                    Pasazer pasazer = new Pasazer();
+
+                    Pociag.registerPasazer(pasazer);
                 }
 
-
-            } else {
-                // print the parameter handle
-                builder.append("\tparamHandle=");
-                builder.append(parameter);
-                // print the parameter value
-                builder.append(", paramValue=");
-                builder.append(theParameters.get(parameter).length);
-                builder.append(" bytes");
-                builder.append("\n");
             }
+
+            // print the parameter handle
+            builder.append("\tparamHandle=");
+            builder.append(parameter);
+            // print the parameter value
+            builder.append(", paramValue=");
+            builder.append(theParameters.get(parameter).length);
+            builder.append(" bytes");
+            builder.append("\n");
+
         }
 
-        log(builder.toString());
-    }
+        if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
+            builder.append(" (Pasazer szuka miejsca)");
+        }
+            log(builder.toString());
+        }
 
-    @Override
-    public void removeObjectInstance(ObjectInstanceHandle theObject,
-                                     byte[] tag,
-                                     OrderType sentOrdering,
-                                     SupplementalRemoveInfo removeInfo)
+        @Override
+        public void removeObjectInstance (ObjectInstanceHandle theObject,
+        byte[] tag,
+        OrderType sentOrdering,
+        SupplementalRemoveInfo removeInfo)
             throws FederateInternalError {
-        log("Object Removed: handle=" + theObject);
-    }
+            log("Object Removed: handle=" + theObject);
+        }
 
-    //----------------------------------------------------------
-    //                     STATIC METHODS
-    //----------------------------------------------------------
-}
+        //----------------------------------------------------------
+        //                     STATIC METHODS
+        //----------------------------------------------------------
+    }

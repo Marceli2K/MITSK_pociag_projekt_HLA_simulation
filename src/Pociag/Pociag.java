@@ -1,23 +1,55 @@
 package Pociag;
 
+import Pasazer.Pasazer;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Created by Stanislaw on 08.05.2018.
  */
 public class Pociag {
+
+    private static List<Wagon> wagonList;
+
+    Pociag(int iloscWagon) {
+        this.wagonList = new ArrayList<>();
+        for (int i = 0; i < iloscWagon; i++) {
+            this.wagonList.add(new Wagon());
+        }
+    }
+
     private int available;
     private int max;
     private static Pociag instance = null;
 
-    private Pociag() {
-        available=0;
-        max=20;
 
+    static void setInstance(int iloscWagon)
+    {
+        if(instance==null) instance = new Pociag(iloscWagon);
     }
-
     static public Pociag getInstance()
     {
-        if(instance==null) instance = new Pociag();
+        if(instance==null) instance = new Pociag(4);
         return instance;
+    }
+
+
+    public static boolean registerPasazer(Pasazer pasazer) {
+        boolean seated = false;
+        for (Wagon wagon : wagonList){
+            if(!seated) {
+                seated = wagon.registerPasazer(pasazer);
+            }
+        }
+        if(!seated) {
+            int x = 0;//get random inf form 0 to wagonList.size()
+            seated = wagonList.get(x).registerPasazerWagon(pasazer);
+        }
+        return seated;
+    }
+    public int getWagonListSize(){
+        return wagonList.size();
     }
 
     public int getAvailable() {
