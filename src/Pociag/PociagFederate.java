@@ -220,7 +220,7 @@ public class PociagFederate {
 
             rtiamb.updateAttributeValues(objectHandle, attributes, generateTag());
 
-            advanceTime(1);
+            advanceTime(fedamb.federateLookahead);
             log("Time Advanced to " + fedamb.federateTime);
         }
 

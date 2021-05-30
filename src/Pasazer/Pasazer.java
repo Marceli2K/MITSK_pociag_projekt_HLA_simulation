@@ -14,7 +14,8 @@ public class Pasazer extends HLA1516eFixedRecord{
     private long pasazerID;
 
 //    prawdopodobienstwoposiadania biletu przez nowego pasazera
-    public Pasazer() {
+    public Pasazer(int pasazerID) {
+
         int x = randomBilet();
         this.bilet = (x==0 ? false:true);
         this.pasazerID = pasazerID;

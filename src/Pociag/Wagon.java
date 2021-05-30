@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Wagon {
-    private List<Pasazer> pasazerList;
+    protected List<Pasazer> pasazerList; //lista pasazerow w wagonie
     private List<Przedział> przedziałList;
     private int iloscPrzedzial;
     Wagon(){
@@ -20,15 +20,20 @@ public class Wagon {
 
     public boolean registerPasazer(Pasazer pasazer) {
         boolean seated = false;
-        for (Przedział przedział : przedziałList){
+        for (Przedział przedzial : przedziałList){
+//            System.out.println("pasazerowie przedzial list: "+ przedzial.getSizePasazerList());
             if(!seated) {
-                seated = przedział.registerPasazerList(pasazer);
+                seated = przedzial.registerPasazerList(pasazer);
             }
         }
         return seated;
     }
     public boolean registerPasazerWagon(Pasazer pasazer) {
          return pasazerList.add(pasazer);
+    }
+
+    protected int getPasazerowieWagonListSize(){
+        return pasazerList.size();
     }
 
 }

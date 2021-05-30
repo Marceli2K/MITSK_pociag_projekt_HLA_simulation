@@ -37,6 +37,7 @@ public class PasazerFederate {
      * The sync point all federates will sync up on before starting
      */
     public static final String READY_TO_RUN = "ReadyToRun";
+    private static int globalID =0;
 //	public InteractionClassHandle addNewPasazerHandle;
 //	public ParameterHandle countNewPasazerHandle;
 
@@ -192,7 +193,8 @@ public class PasazerFederate {
         /////////////////////////////////////
         // 10. do the main simulation loop //
         /////////////////////////////////////
-        Pasazer pasazer = new Pasazer();
+
+        Pasazer pasazer = new Pasazer(getGlobalID());
         while (fedamb.isRunning) {
 
 //			int consumed = pasazer.consume();
@@ -205,7 +207,7 @@ public class PasazerFederate {
 
             ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
             rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
-//            advanceTime(pasazer.getTimeToNext());
+            advanceTime(fedamb.federateLookahead);
             log( "Time Advanced to " + fedamb.federateTime );
 
 //			else
@@ -233,6 +235,10 @@ public class PasazerFederate {
         } catch (FederatesCurrentlyJoined fcj) {
             log("Didn't destroy federation, federates still joined");
         }
+    }
+
+    protected static int getGlobalID() {
+        return globalID++;
     }
 
     ////////////////////////////////////////////////////////////////////////////

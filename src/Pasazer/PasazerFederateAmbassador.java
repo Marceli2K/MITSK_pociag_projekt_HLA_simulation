@@ -24,6 +24,8 @@ import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger64BE;
 
+import static Pociag.Pociag.registerPasazer;
+
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
  * {@link GUIFederate}. It will log information about any callbacks it
@@ -290,12 +292,15 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
                 builder.append(deco.getValue());
                 federate.storageMax = deco.getValue();
                 int liczbaPasazerowDoStworzenia = deco.getValue();
+                builder.append("Liczba pasazerow do stworzenia:  " + liczbaPasazerowDoStworzenia);
+                for (int i = 1; i <= liczbaPasazerowDoStworzenia; i++) {
+                    Pasazer pasazer = new Pasazer(PasazerFederate.getGlobalID());
+                    Pociag.getInstance().registerPasazer(pasazer);
+                    System.out.println("getWagonListSize1 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(0)); // x to numer wagony do którego sie odnosimy
+                    System.out.println("getWagonListSize2 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(1)); // x to numer wagony do którego sie odnosimy
+                    System.out.println("getWagonListSize3 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(2)); // x to numer wagony do którego sie odnosimy
+                    System.out.println("getWagonListSize4 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(3)); // x to numer wagony do którego sie odnosimy
 
-                for (int i = 0; i <= liczbaPasazerowDoStworzenia; i++) {
-                    System.out.println("Liczba pasazerow do stworzenia: " + liczbaPasazerowDoStworzenia);
-                    Pasazer pasazer = new Pasazer();
-
-                    Pociag.registerPasazer(pasazer);
                 }
 
             }

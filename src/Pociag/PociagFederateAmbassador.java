@@ -264,22 +264,22 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
 //				federate.addClientToQueue(clientIdentificationNumber);
 
 //				log("Received Client " + clientIdentificationNumber);
-                builder.append("\tCOUNT PARAM!");
-                byte[] bytes = theParameters.get(federate.countHandle);
-                HLAinteger32BE count = new HLA1516eInteger32BE();
-                try {
-                    count.decode(bytes);
-                } catch (DecoderException e) {
-                    e.printStackTrace();
-                }
-                int countValue = count.getValue();
-                System.out.println("xddd" + countValue);
-                builder.append("\tcount Value=" + countValue);
-                if (interactionClass.equals(federate.AddPasazerHandle)) {
-                    Pociag.getInstance().addTo(countValue);
-                } else if (interactionClass.equals(federate.getProductsHandle)) {
-                    Pociag.getInstance().getFrom(countValue);
-                }
+//                builder.append("\tCOUNT PARAM!");
+//                byte[] bytes = theParameters.get(federate.countHandle);
+//                HLAinteger32BE count = new HLA1516eInteger32BE();
+//                try {
+//                    count.decode(bytes);
+//                } catch (DecoderException e) {
+//                    e.printStackTrace();
+//                }
+//                int countValue = count.getValue();
+//                System.out.println("xddd" + countValue);
+//                builder.append("\tcount Value=" + countValue);
+//                if (interactionClass.equals(federate.AddPasazerHandle)) {
+//                    Pociag.getInstance().addTo(countValue);
+//                } else if (interactionClass.equals(federate.getProductsHandle)) {
+//                    Pociag.getInstance().getFrom(countValue);
+//                }
 
 
             } else {

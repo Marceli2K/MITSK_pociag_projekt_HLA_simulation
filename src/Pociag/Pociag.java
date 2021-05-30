@@ -3,6 +3,7 @@ package Pociag;
 import Pasazer.Pasazer;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -10,7 +11,7 @@ import java.util.List;
  */
 public class Pociag {
 
-    private static List<Wagon> wagonList;
+    private static List<Wagon> wagonList; //lista wagonow w pociagu
 
     Pociag(int iloscWagon) {
         this.wagonList = new ArrayList<>();
@@ -24,32 +25,50 @@ public class Pociag {
     private static Pociag instance = null;
 
 
-    static void setInstance(int iloscWagon)
-    {
-        if(instance==null) instance = new Pociag(iloscWagon);
+    static void setInstance(int iloscWagon) {
+        if (instance == null) instance = new Pociag(iloscWagon);
     }
-    static public Pociag getInstance()
-    {
-        if(instance==null) instance = new Pociag(4);
+
+    static public Pociag getInstance() {
+        if (instance == null) instance = new Pociag(4);
         return instance;
     }
 
 
     public static boolean registerPasazer(Pasazer pasazer) {
         boolean seated = false;
-        for (Wagon wagon : wagonList){
-            if(!seated) {
-                seated = wagon.registerPasazer(pasazer);
+        int tmp=999999999;
+        int index=0;
+        for (Wagon wagon : wagonList) {
+            int siz = wagon.pasazerList.size();
+            if ( tmp> siz){
+                tmp = siz;
+                index = wagonList.indexOf(wagon);
             }
+//            return Collections.min(wagonList.get(wagon).size())
         }
-        if(!seated) {
+//            System.out.println("Numer obsługiwanego wagonu : " + wagonList.indexOf(wagon));
+//            int actualElemnt = wagonList.indexOf(wagon);
+            if (!seated) {
+                System.out.println("ID pasazera :" + pasazer.getPasazerID());
+                System.out.println("ID wagonu :" + index);
+                seated = wagonList.get(index).registerPasazer(pasazer);
+            }
+
+//      dodawanie pasazerow do miejsc stojacych
+        if (!seated) {
             int x = 0;//get random inf form 0 to wagonList.size()
-            seated = wagonList.get(x).registerPasazerWagon(pasazer);
+            seated = wagonList.get(index).registerPasazerWagon(pasazer);
         }
         return seated;
     }
-    public int getWagonListSize(){
+
+    public int getWagonListSize() {
         return wagonList.size();
+    }
+
+    public int getPasazerowieWagonListSizeFromPociag(int x) {
+        return wagonList.get(x).getPasazerowieWagonListSize();
     }
 
     public int getAvailable() {
@@ -68,31 +87,5 @@ public class Pociag {
         this.max = max;
     }
 
-    public boolean addTo(int count)
-    {
-        if(this.available+count<=this.max) {
-            this.available += count;
-            System.out.println("Pociag: I just got for " + count + ". Now I have " + this.available + " products");
-            return true;
-        }
-        else
-        {
-            System.out.println("Pociag: I have no left space for " + count + " products");
-            return false;
-        }
-    }
 
-    public boolean getFrom(int count)
-    {
-        if(available-count>=0) {
-            this.available-=count;
-            System.out.println("Pociag: I just given " + count + ". Now I have " + this.available + " products");
-            return true;
-        }
-        else
-        {
-            System.out.println("Pociag: I have no left products to give");
-            return false;
-        }
-    }
 }

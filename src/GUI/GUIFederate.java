@@ -219,7 +219,7 @@ public class GUIFederate
 			log( "Liczba wsiadajacyh pasazerow to  :  " + liczbaWsiadajacychPasazerow );
 
 			advanceTime(gui.getTimeToNext());
-//			advanceTime(2);
+//			advanceTime(fedamb.federateLookahead);
 			log( "Time Advanced to " + fedamb.federateTime );
 		}
 
@@ -339,24 +339,23 @@ public class GUIFederate
 	 * timestep. It will then wait until a notification of the time advance grant
 	 * has been received.
 	 */
-	private void advanceTime( double timestep ) throws RTIexception
+	protected void advanceTime( double timestep ) throws RTIexception
 	{
 		// request the advance
 		fedamb.isAdvancing = true;
 		HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime + timestep );
 		rtiamb.timeAdvanceRequest( time );
-		System.out.println("aaa:"+ time);
 		// wait for the time advance to be granted. ticking will tell the
 		// LRC to start delivering callbacks to the federate
 		while( fedamb.isAdvancing )
 		{
+			System.out.println("aaa:"+ time);
 			boolean xd = rtiamb.evokeMultipleCallbacks(0.1, 0.2);
 			System.out.println(xd);
-			if(xd){
-				fedamb.isAdvancing = false;
-			}
 		}
 	}
+
+
 	private int getLiczbaPasazerow(){return liczbaPasazerow;}
 
 	private short getTimeAsShort()
