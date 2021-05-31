@@ -8,7 +8,8 @@ import java.util.List;
 public class Przedział {
     private List<Pasazer> pasazerList;
     private int maxPasazer;
-    Przedział(){
+
+    Przedział() {
         this.pasazerList = new ArrayList<>();
         this.maxPasazer = 6;
     }
@@ -20,11 +21,11 @@ public class Przedział {
     public int getSizePasazerList() {
         return pasazerList.size();
     }
+
     public boolean registerPasazerList(Pasazer pasazer) {
-        if(getSizePasazerList()<=getMaxPasazer()) {
+        if (getSizePasazerList() <= getMaxPasazer()) {
             return pasazerList.add(pasazer);
-        }
-        else {
+        } else {
             return false;
         }
     }

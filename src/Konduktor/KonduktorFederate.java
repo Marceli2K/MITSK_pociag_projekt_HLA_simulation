@@ -12,7 +12,7 @@
  *   (that goes for your lawyer as well)
  *
  */
-package Pasazer;
+package Konduktor;
 
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
@@ -32,33 +32,40 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 
-public class PasazerFederate {
+/*
+
+
+ * TO DO LIST
+ * DOWIEDZIEC SIE CZEMU SIE PIERDOLI ADVANCE TIME
+ * DOWIEDZIEC SIE CZEMU W PASAZERZE NIC NIE DZIALA
+ * DOWIEDZIEC SIE CO DALEJ ROBIC ZEBY TO ZROBIC :<
+ *
+ *
+ * */
+
+public class KonduktorFederate {
     /**
      * The sync point all federates will sync up on before starting
      */
     public static final String READY_TO_RUN = "ReadyToRun";
-    private static int globalID = 0;
-//	public InteractionClassHandle addNewPasazerHandle;
-//	public ParameterHandle countNewPasazerHandle;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
-    private PasazerFederateAmbassador fedamb;  // created when we connect
+    private KonduktorFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
-
+    protected int liczbaPasazerow = 0;
     // caches of handle types - set once we join a federation
     protected ObjectClassHandle storageHandle;
     protected AttributeHandle storageMaxHandle;
     protected AttributeHandle storageAvailableHandle;
-    protected InteractionClassHandle SzukajMiejscaHandle;
-
-    protected int storageMax = 0;
-    protected int storageAvailable = 0;
     protected InteractionClassHandle addNewPasazerHandle;
-    protected ParameterHandle countNewPasazerHandle;
+
+    protected int maksymalnaLiczbaMiejscSiedzacych = 0;
+    protected int liczbaDostepnychMiejscSiedzacych = 0;
+    private ParameterHandle countNewPasazerHandle;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -71,7 +78,7 @@ public class PasazerFederate {
      * This is just a helper method to make sure all logging it output in the same form
      */
     private void log(String message) {
-        System.out.println("PasazerFederate   : " + message);
+        System.out.println("ProducerFederate   : " + message);
     }
 
     /**
@@ -107,7 +114,7 @@ public class PasazerFederate {
 
         // connect
         log("Connecting...");
-        fedamb = new PasazerFederateAmbassador(this);
+        fedamb = new KonduktorFederateAmbassador(this);
         rtiamb.connect(fedamb, CallbackModel.HLA_EVOKED);
 
         //////////////////////////////
@@ -136,7 +143,7 @@ public class PasazerFederate {
         ////////////////////////////
 
         rtiamb.joinFederationExecution(federateName,            // name for the federate
-                "Pasazer",   // federate type
+                "Konduktor",   // federate type
                 "PociagFederation"     // name of federation
         );           // modules we want to add
 
@@ -190,29 +197,22 @@ public class PasazerFederate {
         publishAndSubscribe();
         log("Published and Subscribed");
 
+//		// 10. do the main simulation loop //
         /////////////////////////////////////
-        // 10. do the main simulation loop //
-        /////////////////////////////////////
-
-        Pasazer pasazer = new Pasazer(getGlobalID());
+        // here is where we do the meat of our work. in each iteration, we will
+        // update the attribute values of the object we registered, and will
+        // send an interaction.
+        Konduktor konduktor = new Konduktor();
         while (fedamb.isRunning) {
 
-//			int consumed = pasazer.consume();
-//			if(storageAvailable - consumed >= 0 ) {
-//				ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
-//				ParameterHandle addProductsCountHandle = rtiamb.getParameterHandle(SzukajMiejscaHandle, "count");
-//				HLAinteger32BE count = encoderFactory.createHLAinteger32BE(1);
-//				parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
-//				rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
+//			PASAZEROWIE SIADAJA ZAWSZE DO POCIAGU ALE NIE ZAWSZE ZNAJDUJA MIEJSCE
+            int liczbaWsiadajacychPasazerow = konduktor.wsiadanie();
+            adddNewPasazer(liczbaWsiadajacychPasazerow); // dodawanie nowych pasazerow do pociagu
+            log("Liczba wsiadajacyh pasazerow to  :  " + liczbaWsiadajacychPasazerow);
 
-            ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
-            rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
-            advanceTime(fedamb.federateLookahead);
+            advanceTime(konduktor.getTimeToNext());
+//			advanceTime(fedamb.federateLookahead);
             log("Time Advanced to " + fedamb.federateTime);
-
-//			else
-            // 9.3 request a time advance and wait until we get it
-
         }
 
 
@@ -237,10 +237,6 @@ public class PasazerFederate {
         }
     }
 
-    protected static int getGlobalID() {
-        return globalID++;
-    }
-
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Helper Methods //////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -248,7 +244,21 @@ public class PasazerFederate {
     /**
      * This method will attempt to enable the various time related properties for
      * the federate
+     *
+     * @param liczbaWsiadajacychPasazerow
      */
+    private void adddNewPasazer(int liczbaWsiadajacychPasazerow) throws Exception {
+
+        liczbaPasazerow = liczbaPasazerow + liczbaWsiadajacychPasazerow;
+//		publishAndSubscribe();
+        ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
+        ParameterHandle addNewPasazerCountHandle = rtiamb.getParameterHandle(addNewPasazerHandle, "countNewPasazer");
+        HLAinteger32BE count = encoderFactory.createHLAinteger32BE(liczbaWsiadajacychPasazerow);
+        parameterHandleValueMap.put(addNewPasazerCountHandle, count.toByteArray());
+        rtiamb.sendInteraction(this.addNewPasazerHandle, parameterHandleValueMap, generateTag());
+
+    }
+
     private void enableTimePolicy() throws Exception {
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
         //       Portico specific. You will have to alter this if you move to a
@@ -262,7 +272,7 @@ public class PasazerFederate {
         this.rtiamb.enableTimeRegulation(lookahead);
 
         // tick until we get the callback
-        while (fedamb.isRegulating == false) {
+        while (!fedamb.isRegulating) {
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
@@ -272,7 +282,7 @@ public class PasazerFederate {
         this.rtiamb.enableTimeConstrained();
 
         // tick until we get the callback
-        while (fedamb.isConstrained == false) {
+        while (!fedamb.isConstrained) {
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
     }
@@ -283,34 +293,26 @@ public class PasazerFederate {
      * federates produce it.
      */
     private void publishAndSubscribe() throws RTIexception {
-//        System.out.println("publish and subscibe");
-//        // subscribe for ProductsStorage
-//        this.storageHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Pociag");
-//        this.storageMaxHandle = rtiamb.getAttributeHandle(storageHandle, "max");
-//        this.storageAvailableHandle = rtiamb.getAttributeHandle(storageHandle, "available");
-
-
-        // subscribe NewPasazer Interaction
-        String inames = "HLAinteractionRoot.PasazerManagment.NewPasazer";
-        this.addNewPasazerHandle = this.rtiamb.getInteractionClassHandle(inames);
-        this.countNewPasazerHandle = rtiamb.getParameterHandle(this.addNewPasazerHandle, "countNewPasazer");
-        this.rtiamb.subscribeInteractionClass(this.addNewPasazerHandle);
-//        System.out.println("xxx " + this.addNewPasazerHandle);
-
-
+        System.out.println("wait for publish");
+//		// subscribe for storage
+//		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Pociag" );
+//		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "max" );
+//		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "available" );
 ////		// package the information into a handle set
 //		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
 //		attributes.add( storageMaxHandle );
 //		attributes.add( storageAvailableHandle );
-//		rtiamb.subscribeObjectClassAttributes(storageHandle, attributes);
+//		rtiamb.subscribeObjectClassAttributes( storageHandle, attributes );
 
+        //get count parameter for new pasazer Interaction
 
-////		publish GetProducts interaction
-        String iname = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
-        this.SzukajMiejscaHandle = rtiamb.getInteractionClassHandle(iname);
+//       publish Count new pasazer
+
+        this.addNewPasazerHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer");
+        this.countNewPasazerHandle = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer"), "countNewPasazer");
+
         // do the publication
-        this.rtiamb.publishInteractionClass(this.SzukajMiejscaHandle);
-
+        this.rtiamb.publishInteractionClass(this.addNewPasazerHandle);
 
     }
 
@@ -319,17 +321,22 @@ public class PasazerFederate {
      * timestep. It will then wait until a notification of the time advance grant
      * has been received.
      */
-    private void advanceTime(double timestep) throws RTIexception {
+    protected void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + timestep);
         rtiamb.timeAdvanceRequest(time);
-
         // wait for the time advance to be granted. ticking will tell the
         // LRC to start delivering callbacks to the federate
+
         while (fedamb.isAdvancing) {
-            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
+            boolean xd = rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
+    }
+
+
+    private int getLiczbaPasazerow() {
+        return liczbaPasazerow;
     }
 
     private short getTimeAsShort() {
@@ -345,14 +352,14 @@ public class PasazerFederate {
     //----------------------------------------------------------
     public static void main(String[] args) {
         // get a federate name, use "exampleFederate" as default
-        String federateName = "Pasazer";
+        String federateName = "Konduktor";
         if (args.length != 0) {
             federateName = args[0];
         }
 
         try {
             // run the example federate
-            new PasazerFederate().runFederate(federateName);
+            new KonduktorFederate().runFederate(federateName);
         } catch (Exception rtie) {
             // an exception occurred, just log the information and exit
             rtie.printStackTrace();

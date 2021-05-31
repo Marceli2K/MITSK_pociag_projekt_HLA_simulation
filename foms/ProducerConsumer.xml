@@ -54,31 +54,26 @@
                     <dataType>HLAinteger32BE</dataType>
                     <semantics>Liczba pasazerow ktora wsiadla</semantics>
                 </parameter>
-<!--                <interactionClass>-->
-<!--                    <name>AddPasazer</name>-->
-<!--                    <sharing>PublishSubscribe</sharing>-->
-<!--                    <transportation>HLAreliable</transportation>-->
-<!--                    <order>Receive</order>-->
-<!--                    <semantics>Zdarzenie dodania nowych pasazerow</semantics>-->
-<!--                </interactionClass>-->
-<!--                <interactionClass>-->
-<!--                    <name>GetProducts</name>-->
-<!--                    <sharing>Publish</sharing>-->
-<!--                    <transportation>HLAbestEffort</transportation>-->
-<!--                    <order>Receive</order>-->
-<!--                    <semantics>Zdarzenia pobrania produktow</semantics>-->
-<!--                </interactionClass>-->
+                <!--                <interactionClass>-->
+                <!--                    <name>AddPasazer</name>-->
+                <!--                    <sharing>PublishSubscribe</sharing>-->
+                <!--                    <transportation>HLAreliable</transportation>-->
+                <!--                    <order>Receive</order>-->
+                <!--                    <semantics>Zdarzenie dodania nowych pasazerow</semantics>-->
+                <!--                </interactionClass>-->
+                <!--                <interactionClass>-->
+                <!--                    <name>GetProducts</name>-->
+                <!--                    <sharing>Publish</sharing>-->
+                <!--                    <transportation>HLAbestEffort</transportation>-->
+                <!--                    <order>Receive</order>-->
+                <!--                    <semantics>Zdarzenia pobrania produktow</semantics>-->
+                <!--                </interactionClass>-->
                 <interactionClass>
                     <name>SzukajMiejsca</name>
                     <sharing>Publish</sharing>
                     <transportation>HLAbestEffort</transportation>
                     <order>Receive</order>
                     <semantics>Zdarzenia poszukiwania miejsca</semantics>
-<!--                    <parameter>-->
-<!--                        <name>count</name>-->
-<!--                        <dataType>HLAinteger32BE</dataType>-->
-<!--                        <semantics>Poszukiwanie miejsca</semantics>-->
-<!--                    </parameter>-->
                 </interactionClass>
                 <interactionClass>
                     <name>NewPasazer</name>

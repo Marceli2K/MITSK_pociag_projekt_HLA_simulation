@@ -9,7 +9,8 @@ public class Wagon {
     protected List<Pasazer> pasazerList; //lista pasazerow w wagonie
     private List<Przedział> przedziałList;
     private int iloscPrzedzial;
-    Wagon(){
+
+    Wagon() {
         this.pasazerList = new ArrayList<>();
         this.przedziałList = new ArrayList<>();
         this.iloscPrzedzial = 4;
@@ -20,19 +21,20 @@ public class Wagon {
 
     public boolean registerPasazer(Pasazer pasazer) {
         boolean seated = false;
-        for (Przedział przedzial : przedziałList){
+        for (Przedział przedzial : przedziałList) {
 //            System.out.println("pasazerowie przedzial list: "+ przedzial.getSizePasazerList());
-            if(!seated) {
+            if (!seated) {
                 seated = przedzial.registerPasazerList(pasazer);
             }
         }
         return seated;
     }
+
     public boolean registerPasazerWagon(Pasazer pasazer) {
-         return pasazerList.add(pasazer);
+        return pasazerList.add(pasazer);
     }
 
-    protected int getPasazerowieWagonListSize(){
+    protected int getPasazerowieWagonListSize() {
         return pasazerList.size();
     }
 

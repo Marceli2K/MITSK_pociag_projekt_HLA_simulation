@@ -1,7 +1,6 @@
-package GUI;
+package Konduktor;
 
 import Pasazer.Pasazer;
-import Pociag.Wagon;
 
 import java.util.List;
 import java.util.Random;
@@ -9,12 +8,12 @@ import java.util.Random;
 /**
  * Created by Stanislaw on 08.05.2018.
  */
-public class GUI {
+public class Konduktor {
     int timeToNext;
     private Random random;
     private List<Pasazer> wagonList;
 
-    public GUI() {
+    public Konduktor() {
         random = new Random();
         timeToNext = generateTimeToNext();
     }

@@ -274,14 +274,13 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
         // print the time (if we have it) we'll get null if we are just receiving
         // a forwarded call from the other reflect callback above
         if (time != null) {
-            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
+            builder.append(", time=").append(((HLAfloat64Time) time).getValue());
         }
 
         // print the parameer information
-        builder.append(", parameterCount=" + theParameters.size());
+        builder.append(", parameterCount=").append(theParameters.size());
         builder.append("\n");
         for (ParameterHandle parameter : theParameters.keySet()) {
-            builder.append("XDDDDDDDDDDDD)");
             if (parameter.equals(federate.countNewPasazerHandle)) {
                 HLAinteger32BE deco = new HLA1516eInteger32BE();
                 try {
@@ -292,14 +291,14 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
                 builder.append(deco.getValue());
                 federate.storageMax = deco.getValue();
                 int liczbaPasazerowDoStworzenia = deco.getValue();
-                builder.append("Liczba pasazerow do stworzenia:  " + liczbaPasazerowDoStworzenia);
+                builder.append("Liczba pasazerow do stworzenia:  ").append(liczbaPasazerowDoStworzenia);
                 for (int i = 1; i <= liczbaPasazerowDoStworzenia; i++) {
                     Pasazer pasazer = new Pasazer(PasazerFederate.getGlobalID());
                     Pociag.getInstance().registerPasazer(pasazer);
-                    System.out.println("getWagonListSize1 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(0)); // x to numer wagony do którego sie odnosimy
-                    System.out.println("getWagonListSize2 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(1)); // x to numer wagony do którego sie odnosimy
-                    System.out.println("getWagonListSize3 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(2)); // x to numer wagony do którego sie odnosimy
-                    System.out.println("getWagonListSize4 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(3)); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize1 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(0)); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize2 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(1)); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize3 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(2)); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize4 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(3)); // x to numer wagony do którego sie odnosimy
 
                 }
 
@@ -319,19 +318,19 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
         if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
             builder.append(" (Pasazer szuka miejsca)");
         }
-            log(builder.toString());
-        }
-
-        @Override
-        public void removeObjectInstance (ObjectInstanceHandle theObject,
-        byte[] tag,
-        OrderType sentOrdering,
-        SupplementalRemoveInfo removeInfo)
-            throws FederateInternalError {
-            log("Object Removed: handle=" + theObject);
-        }
-
-        //----------------------------------------------------------
-        //                     STATIC METHODS
-        //----------------------------------------------------------
+        log(builder.toString());
     }
+
+    @Override
+    public void removeObjectInstance(ObjectInstanceHandle theObject,
+                                     byte[] tag,
+                                     OrderType sentOrdering,
+                                     SupplementalRemoveInfo removeInfo)
+            throws FederateInternalError {
+        log("Object Removed: handle=" + theObject);
+    }
+
+    //----------------------------------------------------------
+    //                     STATIC METHODS
+    //----------------------------------------------------------
+}

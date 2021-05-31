@@ -37,11 +37,11 @@ public class Pociag {
 
     public static boolean registerPasazer(Pasazer pasazer) {
         boolean seated = false;
-        int tmp=999999999;
-        int index=0;
+        int tmp = 999999999;
+        int index = 0;
         for (Wagon wagon : wagonList) {
             int siz = wagon.pasazerList.size();
-            if ( tmp> siz){
+            if (tmp > siz) {
                 tmp = siz;
                 index = wagonList.indexOf(wagon);
             }
@@ -49,11 +49,12 @@ public class Pociag {
         }
 //            System.out.println("Numer obsługiwanego wagonu : " + wagonList.indexOf(wagon));
 //            int actualElemnt = wagonList.indexOf(wagon);
-            if (!seated) {
-                System.out.println("ID pasazera :" + pasazer.getPasazerID());
-                System.out.println("ID wagonu :" + index);
-                seated = wagonList.get(index).registerPasazer(pasazer);
-            }
+        if (!seated) {
+            System.out.println("Czy pasazer ma bilet :" + pasazer.getPasazerBilet());
+            System.out.println("ID pasazera :" + pasazer.getPasazerID());
+//            System.out.println("ID wagonu :" + index);
+            seated = wagonList.get(index).registerPasazer(pasazer);
+        }
 
 //      dodawanie pasazerow do miejsc stojacych
         if (!seated) {
