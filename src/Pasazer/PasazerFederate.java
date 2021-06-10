@@ -17,10 +17,7 @@ package Pasazer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -54,11 +51,15 @@ public class PasazerFederate {
     protected AttributeHandle storageMaxHandle;
     protected AttributeHandle storageAvailableHandle;
     protected InteractionClassHandle SzukajMiejscaHandle;
+    protected InteractionClassHandle addNewPasazerHandle;
 
+    protected int tmpStandPassengerSize = 0;
+    protected int standPassengerSize = 0;
     protected int storageMax = 0;
     protected int storageAvailable = 0;
-    protected InteractionClassHandle addNewPasazerHandle;
+    protected InteractionClassHandle sendStandPassengerSize;
     protected ParameterHandle countNewPasazerHandle;
+    protected ParameterHandle countStandPassengerSize;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -197,21 +198,11 @@ public class PasazerFederate {
         Pasazer pasazer = new Pasazer(getGlobalID());
         while (fedamb.isRunning) {
 
-//			int consumed = pasazer.consume();
-//			if(storageAvailable - consumed >= 0 ) {
-//				ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
-//				ParameterHandle addProductsCountHandle = rtiamb.getParameterHandle(SzukajMiejscaHandle, "count");
-//				HLAinteger32BE count = encoderFactory.createHLAinteger32BE(1);
-//				parameterHandleValueMap.put(addProductsCountHandle, count.toByteArray());
-//				rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
-
             ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
             rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
+            publishStandPassengerSize();
             advanceTime(fedamb.federateLookahead);
             log("Time Advanced to " + fedamb.federateTime);
-
-//			else
-            // 9.3 request a time advance and wait until we get it
 
         }
 
@@ -226,6 +217,7 @@ public class PasazerFederate {
         // 13. try and destroy the federation //
         ////////////////////////////////////////
         // NOTE: we won't die if we can't do this because other federates
+        // NOTE: we won't die if we can't do this because other federates
         //       remain. in that case we'll leave it for them to clean up
         try {
             rtiamb.destroyFederationExecution("ExampleFederation");
@@ -235,6 +227,18 @@ public class PasazerFederate {
         } catch (FederatesCurrentlyJoined fcj) {
             log("Didn't destroy federation, federates still joined");
         }
+    }
+
+    protected void publishStandPassengerSize() throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress {
+        standPassengerSize = fedamb.getStandPassengerSize();
+        if (standPassengerSize > tmpStandPassengerSize) {
+            ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
+            ParameterHandle standPassengerSizeHandle = rtiamb.getParameterHandle(sendStandPassengerSize, "countStandPassengerSize");
+            HLAinteger32BE sizePassenger = encoderFactory.createHLAinteger32BE(standPassengerSize);
+            parameterHandleValueMap.put(standPassengerSizeHandle, sizePassenger.toByteArray());
+            rtiamb.sendInteraction(this.sendStandPassengerSize, parameterHandleValueMap, generateTag());
+        }
+        tmpStandPassengerSize = standPassengerSize;
     }
 
     protected static int getGlobalID() {
@@ -310,6 +314,14 @@ public class PasazerFederate {
         this.SzukajMiejscaHandle = rtiamb.getInteractionClassHandle(iname);
         // do the publication
         this.rtiamb.publishInteractionClass(this.SzukajMiejscaHandle);
+
+
+////	publish sendStandPassengerSize interaction
+        this.sendStandPassengerSize = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.StandPassengerSize");
+        this.countStandPassengerSize = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.StandPassengerSize"), "countStandPassengerSize");
+
+        // do the publication
+        this.rtiamb.publishInteractionClass(this.sendStandPassengerSize);
 
 
     }

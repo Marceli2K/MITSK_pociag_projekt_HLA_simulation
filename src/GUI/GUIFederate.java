@@ -28,6 +28,8 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static org.portico.lrc.PorticoConstants.sleep;
+
 
 /*
 
@@ -59,10 +61,13 @@ public class GUIFederate {
     protected AttributeHandle storageMaxHandle;
     protected AttributeHandle storageAvailableHandle;
     protected InteractionClassHandle addNewPasazerHandle;
-
+    protected int aktualnaLiczbaPasazerow;
     protected int maksymalnaLiczbaMiejscSiedzacych = 0;
+    protected int maksymalnaLiczbaPasazerow = 99;
     protected int liczbaDostepnychMiejscSiedzacych = 0;
     private ParameterHandle countNewPasazerHandle;
+    protected InteractionClassHandle standPassengerHandleHandle;
+    protected ParameterHandle countStandPassengerSizeHandle;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -203,13 +208,19 @@ public class GUIFederate {
         while (fedamb.isRunning) {
 
 //			PASAZEROWIE SIADAJA ZAWSZE DO POCIAGU ALE NIE ZAWSZE ZNAJDUJA MIEJSCE
-            int liczbaWsiadajacychPasazerow = gui.wsiadanie();
-            adddNewPasazer(liczbaWsiadajacychPasazerow); // dodawanie nowych pasazerow do pociagu
-            log("Liczba wsiadajacyh pasazerow to  :  " + liczbaWsiadajacychPasazerow);
 
-            advanceTime(gui.getTimeToNext());
+            if (maksymalnaLiczbaPasazerow >= aktualnaLiczbaPasazerow) {
+                int liczbaWsiadajacychPasazerow = gui.wsiadanie();
+                adddNewPasazer(liczbaWsiadajacychPasazerow); // dodawanie nowych pasazerow do pociagu
+                log("Liczba wsiadajacyh pasazerow to  :  " + liczbaWsiadajacychPasazerow);
+
+                advanceTime(gui.getTimeToNext());
 //			advanceTime(fedamb.federateLookahead);
-            log("Time Advanced to " + fedamb.federateTime);
+                log("Time Advanced to " + fedamb.federateTime);
+            } else {
+                log("Osiągnięto maksymalną liczbe pasazerów, obecnie jest :  " + aktualnaLiczbaPasazerow);
+                sleep(111);
+            }
         }
 
 
@@ -291,17 +302,14 @@ public class GUIFederate {
      */
     private void publishAndSubscribe() throws RTIexception {
         System.out.println("wait for publish");
-//		// subscribe for storage
-//		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Pociag" );
-//		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "max" );
-//		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "available" );
-////		// package the information into a handle set
-//		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-//		attributes.add( storageMaxHandle );
-//		attributes.add( storageAvailableHandle );
-//		rtiamb.subscribeObjectClassAttributes( storageHandle, attributes );
+//        subscribe standPassengerHandleCount
+        String inames = "HLAinteractionRoot.PasazerManagment.StandPassengerSize";
+        standPassengerHandleHandle = rtiamb.getInteractionClassHandle(inames);
 
-        //get count parameter for new pasazer Interaction
+        //get count parameter for PasazerManagment Interaction
+        countStandPassengerSizeHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.StandPassengerSize"), "countStandPassengerSize");
+        rtiamb.subscribeInteractionClass(standPassengerHandleHandle);
+
 
 //       publish Count new pasazer
 

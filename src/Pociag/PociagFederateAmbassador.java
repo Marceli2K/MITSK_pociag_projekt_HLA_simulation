@@ -14,6 +14,7 @@
  */
 package Pociag;
 
+import Konduktor.Konduktor;
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleValueMap;
 import hla.rti1516e.FederateHandleSet;
@@ -232,6 +233,20 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
             builder.append(" (GetProducts)");
         } else if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
             builder.append(" (SzukajMiejsca)");
+        } else if (interactionClass.equals(federate.checkBiletInteractionHandle)) {
+            builder.append(" (checkBiletInteractionHandle)");
+
+            /*TODO list
+               musze tu opracowac obsluge sprawdzania przez konduktora biletó dla pasazerów
+               ale nie do końca wiem jak to opracować
+               tzn jak sprawdzac pasazerow po kolei tak zeby było okej
+               moze np dac pasazerowi taka funkcje jak get pasazer checked and get pasazer bilet
+               na podstawie id pasazera zwracac te wartosci
+            *
+            * */
+//            Wagon.getPasazerowieWagonList();
+//            Konduktor.getInstanceKonduktor().checkBilets();
+            
         }
 
         // print the tag
@@ -246,7 +261,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
         builder.append(", parameterCount=" + theParameters.size());
         builder.append("\n");
         if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
-            System.out.println("pasazer szuka miejsca");
+            System.out.println("pasazer szuka miejsca1");
             Pociag pociag = Pociag.getInstance();
             System.out.println("wagon list  size : " + pociag.getWagonListSize());
 
@@ -254,32 +269,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
         for (ParameterHandle parameter : theParameters.keySet()) {
 
             if (parameter.equals(federate.countHandle)) {
-                System.out.println("pasazer szuka miejsca");
-//				HLAinteger64BE clientId = encoderFactory.createHLAinteger64BE();
-//
-//				clientId.decode(theParameters.get(federate.getNewClientInteractionClassClientIdParameterHandle()));
-//
-//				Long clientIdentificationNumber = clientId.getValue();
-//
-//				federate.addClientToQueue(clientIdentificationNumber);
-
-//				log("Received Client " + clientIdentificationNumber);
-//                builder.append("\tCOUNT PARAM!");
-//                byte[] bytes = theParameters.get(federate.countHandle);
-//                HLAinteger32BE count = new HLA1516eInteger32BE();
-//                try {
-//                    count.decode(bytes);
-//                } catch (DecoderException e) {
-//                    e.printStackTrace();
-//                }
-//                int countValue = count.getValue();
-//                System.out.println("xddd" + countValue);
-//                builder.append("\tcount Value=" + countValue);
-//                if (interactionClass.equals(federate.AddPasazerHandle)) {
-//                    Pociag.getInstance().addTo(countValue);
-//                } else if (interactionClass.equals(federate.getProductsHandle)) {
-//                    Pociag.getInstance().getFrom(countValue);
-//                }
+                System.out.println("pasazer szuka miejsca2");
 
 
             } else {

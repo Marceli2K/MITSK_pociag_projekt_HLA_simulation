@@ -1,5 +1,6 @@
 package Pasazer;
 
+import Konduktor.Konduktor;
 import org.portico.impl.hla1516e.types.encoding.*;
 import hla.rti1516e.encoding.DecoderException;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger64BE;
@@ -11,12 +12,13 @@ import java.util.Random;
  */
 public class Pasazer extends HLA1516eFixedRecord {
     private static long prawdPosiadaniaBiletu;
+    public boolean checked;
     private boolean bilet;
-    private long pasazerID;
-
+    protected long pasazerID;
+    private static Pasazer instance = null;
     //    prawdopodobienstwo posiadania biletu przez nowego pasazera
     public Pasazer(int pasazerID) {
-
+        checked = false;
         int x = randomBilet();
         this.bilet = (x == 0 ? false : true);
         this.pasazerID = pasazerID;
@@ -49,9 +51,13 @@ public class Pasazer extends HLA1516eFixedRecord {
         return bilet;
     }
 
-
-//    public double getArrivalTime() {
-//        return arrivalTime;
+//
+//    static void setInstance() {
+//        if (instance == null) instance = new Pasazer();
 //    }
+//
+//    static public Konduktor getInstanceKonduktor() {
+//        if (instance == null) instance = new Pasazer();
+//        return instance;
 
 }

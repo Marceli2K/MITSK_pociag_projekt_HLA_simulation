@@ -35,7 +35,7 @@ import java.net.URL;
 /*
 
 
- * TO DO LIST
+ * TODO LIST
  * DOWIEDZIEC SIE CZEMU SIE PIERDOLI ADVANCE TIME
  * DOWIEDZIEC SIE CZEMU W PASAZERZE NIC NIE DZIALA
  * DOWIEDZIEC SIE CO DALEJ ROBIC ZEBY TO ZROBIC :<
@@ -61,11 +61,13 @@ public class KonduktorFederate {
     protected ObjectClassHandle storageHandle;
     protected AttributeHandle storageMaxHandle;
     protected AttributeHandle storageAvailableHandle;
-    protected InteractionClassHandle addNewPasazerHandle;
-
+    protected InteractionClassHandle addNewKonduktorHandle;
+    protected int numberOfKonduktor =0;
     protected int maksymalnaLiczbaMiejscSiedzacych = 0;
     protected int liczbaDostepnychMiejscSiedzacych = 0;
-    private ParameterHandle countNewPasazerHandle;
+    protected ParameterHandle addNewKonduktorCount;
+    private InteractionClassHandle checkBiletInteractionHandle;
+    private InteractionClassHandle addNewKonduktorCountHandle;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -205,14 +207,21 @@ public class KonduktorFederate {
         Konduktor konduktor = new Konduktor();
         while (fedamb.isRunning) {
 
-//			PASAZEROWIE SIADAJA ZAWSZE DO POCIAGU ALE NIE ZAWSZE ZNAJDUJA MIEJSCE
-            int liczbaWsiadajacychPasazerow = konduktor.wsiadanie();
-            adddNewPasazer(liczbaWsiadajacychPasazerow); // dodawanie nowych pasazerow do pociagu
-            log("Liczba wsiadajacyh pasazerow to  :  " + liczbaWsiadajacychPasazerow);
+//			Wygenerowanie liczby konduktorów w pociągu
+            if (numberOfKonduktor ==0) {
+                numberOfKonduktor = konduktor.numberofKonduktors();
+                addNewKonduktor(numberOfKonduktor); // wywołanie inrekacji dodającej nowych konduktórów
 
-            advanceTime(konduktor.getTimeToNext());
+                advanceTime(fedamb.federateLookahead);
 //			advanceTime(fedamb.federateLookahead);
-            log("Time Advanced to " + fedamb.federateTime);
+                log("Time Advanced to " + fedamb.federateTime);
+            }else {
+                checkBiletInteraction(); // wywołanie inrekacji wysyłającej informacje o rozpoczęciu sprawdzania biletó
+
+                advanceTime(fedamb.federateLookahead);
+//			advanceTime(fedamb.federateLookahead);
+                log("Time Advanced to " + fedamb.federateTime);
+            }
         }
 
 
@@ -245,19 +254,28 @@ public class KonduktorFederate {
      * This method will attempt to enable the various time related properties for
      * the federate
      *
-     * @param liczbaWsiadajacychPasazerow
+     * @param numberOfKonduktor
      */
-    private void adddNewPasazer(int liczbaWsiadajacychPasazerow) throws Exception {
+    private void addNewKonduktor(int numberOfKonduktor) throws Exception {
 
-        liczbaPasazerow = liczbaPasazerow + liczbaWsiadajacychPasazerow;
 //		publishAndSubscribe();
         ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
-        ParameterHandle addNewPasazerCountHandle = rtiamb.getParameterHandle(addNewPasazerHandle, "countNewPasazer");
-        HLAinteger32BE count = encoderFactory.createHLAinteger32BE(liczbaWsiadajacychPasazerow);
-        parameterHandleValueMap.put(addNewPasazerCountHandle, count.toByteArray());
-        rtiamb.sendInteraction(this.addNewPasazerHandle, parameterHandleValueMap, generateTag());
+        ParameterHandle addNewKonduktorCountHandleParameter = rtiamb.getParameterHandle(addNewKonduktorHandle, "countNewKonduktor");
+        HLAinteger32BE count = encoderFactory.createHLAinteger32BE(numberOfKonduktor);
+        parameterHandleValueMap.put(addNewKonduktorCountHandleParameter, count.toByteArray());
+        rtiamb.sendInteraction(this.addNewKonduktorHandle, parameterHandleValueMap, generateTag());
 
     }
+
+    private void checkBiletInteraction() throws Exception {
+
+//		publishAndSubscribe();
+        ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
+        rtiamb.sendInteraction(checkBiletInteractionHandle, parameterHandleValueMap, generateTag());
+
+    }
+
+
 
     private void enableTimePolicy() throws Exception {
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
@@ -294,25 +312,20 @@ public class KonduktorFederate {
      */
     private void publishAndSubscribe() throws RTIexception {
         System.out.println("wait for publish");
-//		// subscribe for storage
-//		this.storageHandle = rtiamb.getObjectClassHandle( "HLAobjectRoot.Pociag" );
-//		this.storageMaxHandle = rtiamb.getAttributeHandle( storageHandle, "max" );
-//		this.storageAvailableHandle = rtiamb.getAttributeHandle( storageHandle, "available" );
-////		// package the information into a handle set
-//		AttributeHandleSet attributes = rtiamb.getAttributeHandleSetFactory().create();
-//		attributes.add( storageMaxHandle );
-//		attributes.add( storageAvailableHandle );
-//		rtiamb.subscribeObjectClassAttributes( storageHandle, attributes );
 
-        //get count parameter for new pasazer Interaction
+////	publish checkBilet interaction
+        String iname = "HLAinteractionRoot.PasazerManagment.CheckBilet";
+        this.checkBiletInteractionHandle = rtiamb.getInteractionClassHandle(iname);
+        // do the publication
+        this.rtiamb.publishInteractionClass(this.checkBiletInteractionHandle);
 
-//       publish Count new pasazer
 
-        this.addNewPasazerHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer");
-        this.countNewPasazerHandle = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer"), "countNewPasazer");
+////	publish sendStandPassengerSize interaction
+        this.addNewKonduktorHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.NewKonduktor");
+        this.addNewKonduktorCount = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.NewKonduktor"), "countNewKonduktor");
 
         // do the publication
-        this.rtiamb.publishInteractionClass(this.addNewPasazerHandle);
+        this.rtiamb.publishInteractionClass(this.addNewKonduktorHandle);
 
     }
 

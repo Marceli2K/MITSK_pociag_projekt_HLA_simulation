@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Wagon {
-    protected List<Pasazer> pasazerList; //lista pasazerow w wagonie
+    protected static List<Pasazer> pasazerList; //lista pasazerow w wagonie
     private List<Przedział> przedziałList;
     private int iloscPrzedzial;
 
@@ -34,8 +34,11 @@ public class Wagon {
         return pasazerList.add(pasazer);
     }
 
-    protected int getPasazerowieWagonListSize() {
+    public int getPasazerowieWagonListSize() {
         return pasazerList.size();
+    }
+    protected static List<Pasazer> getPasazerowieWagonList() {
+        return pasazerList;
     }
 
 }

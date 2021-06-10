@@ -267,9 +267,9 @@ public class KonduktorFederateAmbassador extends NullFederateAmbassador
 		
 		// print the handle
 		builder.append( " handle=" + interactionClass );
-		if( interactionClass.equals(federate.addNewPasazerHandle) )
+		if( interactionClass.equals(federate.addNewKonduktorHandle) )
 		{
-			builder.append( " (addProductsHandle)" );
+			builder.append( " (addNewKonduktorHandle)" );
 		}
 		
 		// print the tag
@@ -285,7 +285,18 @@ public class KonduktorFederateAmbassador extends NullFederateAmbassador
 		builder.append( ", parameterCount=" + theParameters.size() );
 		builder.append( "\n" );
 		for( ParameterHandle parameter : theParameters.keySet() )
-		{
+		{           if (parameter.equals(federate.addNewKonduktorCount)) {
+			HLAinteger32BE deco = new HLA1516eInteger32BE();
+			try {
+				deco.decode(theParameters.get(parameter));
+			} catch (DecoderException e) {
+				e.printStackTrace();
+			}
+			builder.append(deco.getValue());
+			federate.numberOfKonduktor = deco.getValue();
+			int liczbaKonduktorowDoStworzenia = deco.getValue();
+			builder.append("Liczba pasazerow do stworzenia:  " + "\n").append(liczbaKonduktorowDoStworzenia);
+		}
 			// print the parameter handle
 			builder.append( "\tparamHandle=" );
 			builder.append( parameter );

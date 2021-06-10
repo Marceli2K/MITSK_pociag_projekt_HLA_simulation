@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Przedział {
-    private List<Pasazer> pasazerList;
+    protected List<Pasazer> pasazerList;
     private int maxPasazer;
 
     Przedział() {
@@ -28,6 +28,9 @@ public class Przedział {
         } else {
             return false;
         }
+    }
+    protected List<Pasazer> getPasazerowiePrzedzialList() {
+        return pasazerList;
     }
 
 }

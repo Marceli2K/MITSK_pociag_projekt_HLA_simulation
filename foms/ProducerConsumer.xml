@@ -86,6 +86,35 @@
                         <semantics>Client identification number</semantics>
                     </parameter>
                 </interactionClass>
+                <interactionClass>
+                    <name>NewKonduktor</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <parameter>
+                        <name>countNewKonduktor</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Liczba konduktorów</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
+                    <name>CheckBilet</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Rozpoczęcie sprawdzania biletów</semantics>
+                </interactionClass>
+                <interactionClass>
+                    <name>StandPassengerSize</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <parameter>
+                        <name>countStandPassengerSize</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>number of standing passenger</semantics>
+                    </parameter>
+                </interactionClass>
             </interactionClass>
         </interactionClass>
     </interactions>

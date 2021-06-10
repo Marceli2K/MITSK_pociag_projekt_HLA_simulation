@@ -291,14 +291,14 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
                 builder.append(deco.getValue());
                 federate.storageMax = deco.getValue();
                 int liczbaPasazerowDoStworzenia = deco.getValue();
-                builder.append("Liczba pasazerow do stworzenia:  ").append(liczbaPasazerowDoStworzenia);
+                builder.append("Liczba pasazerow do stworzenia:  " + "\n").append(liczbaPasazerowDoStworzenia);
                 for (int i = 1; i <= liczbaPasazerowDoStworzenia; i++) {
                     Pasazer pasazer = new Pasazer(PasazerFederate.getGlobalID());
                     Pociag.getInstance().registerPasazer(pasazer);
-                    builder.append("getWagonListSize1 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(0)); // x to numer wagony do którego sie odnosimy
-                    builder.append("getWagonListSize2 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(1)); // x to numer wagony do którego sie odnosimy
-                    builder.append("getWagonListSize3 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(2)); // x to numer wagony do którego sie odnosimy
-                    builder.append("getWagonListSize4 ").append(Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(3)); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize1 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(0) + "\n"); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize2 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(1) + "\n"); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize3 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(2) + "\n"); // x to numer wagony do którego sie odnosimy
+                    builder.append("getWagonListSize4 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(3) + "\n"); // x to numer wagony do którego sie odnosimy
 
                 }
 
@@ -333,4 +333,13 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     //                     STATIC METHODS
     //----------------------------------------------------------
+    public int getStandPassengerSize() {
+        int standPassengerSize = 0;
+        standPassengerSize = Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(0) +
+                Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(1) +
+                Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(2) +
+                Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(3);
+
+        return standPassengerSize;
+    }
 }

@@ -283,6 +283,9 @@ public class GUIFederateAmbassador extends NullFederateAmbassador
 		{
 			builder.append( " (addProductsHandle)" );
 		}
+		if (interactionClass.equals(this.federate.standPassengerHandleHandle)) {
+			builder.append(" (Liczba stojących pasazerów zmienia się)");
+		}
 		
 		// print the tag
 		builder.append( ", tag=" + new String(tag) );
@@ -298,6 +301,17 @@ public class GUIFederateAmbassador extends NullFederateAmbassador
 		builder.append( "\n" );
 		for( ParameterHandle parameter : theParameters.keySet() )
 		{
+			if (parameter.equals(federate.countStandPassengerSizeHandle)) {
+			HLAinteger32BE deco = new HLA1516eInteger32BE();
+			try {
+				deco.decode(theParameters.get(parameter));
+			} catch (DecoderException e) {
+				e.printStackTrace();
+			}
+			builder.append(deco.getValue());
+			federate.aktualnaLiczbaPasazerow = deco.getValue();
+			}
+
 			// print the parameter handle
 			builder.append( "\tparamHandle=" );
 			builder.append( parameter );

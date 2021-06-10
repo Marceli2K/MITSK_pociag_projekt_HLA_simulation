@@ -1,5 +1,6 @@
 package Pociag;
 
+import Konduktor.Konduktor;
 import Pasazer.Pasazer;
 
 import java.util.ArrayList;
@@ -12,11 +13,12 @@ import java.util.List;
 public class Pociag {
 
     private static List<Wagon> wagonList; //lista wagonow w pociagu
-
+//    private static List<Konduktor> konduktorList; //lista konduktorów w pociagu
     Pociag(int iloscWagon) {
-        this.wagonList = new ArrayList<>();
+        wagonList = new ArrayList<>();
         for (int i = 0; i < iloscWagon; i++) {
-            this.wagonList.add(new Wagon());
+            wagonList.add(new Wagon());
+//            konduktorList.add(new Konduktor()); // Dla każdego wagonu zostaje utworzony jeden konduktor
         }
     }
 

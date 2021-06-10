@@ -61,8 +61,9 @@ public class PociagFederate {
     protected InteractionClassHandle AddPasazerHandle;
     protected InteractionClassHandle getProductsHandle;
     protected ParameterHandle countHandle;
-    private InteractionClassHandle newPasazerHandle;
-    private ParameterHandle newClientInteractionClassClientIdParameterHandle;
+    protected InteractionClassHandle newPasazerHandle;
+    protected ParameterHandle newClientInteractionClassClientIdParameterHandle;
+    protected InteractionClassHandle checkBiletInteractionHandle;
 //    private InteractionClassHandle SzukajMiejscaHandle;
 
     //----------------------------------------------------------
@@ -207,7 +208,7 @@ public class PociagFederate {
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-        Pociag pociag = new Pociag(10);
+//        Pociag pociag = new Pociag(10);
         while (fedamb.isRunning) {
             // update ProductsStorage parameters max and available to current values
             AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
@@ -306,20 +307,17 @@ public class PociagFederate {
 
 //        subscribe szukaj miejsca
         String inames = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
-        SzukajMiejscaHandle = rtiamb.getInteractionClassHandle( inames );
+        checkBiletInteractionHandle = rtiamb.getInteractionClassHandle( inames );
+
+//        subscribe cehckbilet interaction
+        String iname = "HLAinteractionRoot.PasazerManagment.CheckBilet";
+        SzukajMiejscaHandle = rtiamb.getInteractionClassHandle( iname );
+
 
         //get count parameter for PasazerManagment Interaction
         countHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SzukajMiejsca"), "count");
-
-
         rtiamb.subscribeInteractionClass(SzukajMiejscaHandle);
 
-
-//        { // subscribe for AddPasazer interaction
-//            String iname = "HLAinteractionRoot.PasazerManagment.AddPasazer";
-//            AddPasazerHandle = rtiamb.getInteractionClassHandle(iname);
-//            rtiamb.subscribeInteractionClass(AddPasazerHandle);
-//        }
 
 
     }
