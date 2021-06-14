@@ -14,13 +14,12 @@
  */
 package Pociag;
 
+import Konduktor.Konduktor;
+import Pasazer.Pasazer;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederatesCurrentlyJoined;
-import hla.rti1516e.exceptions.FederationExecutionAlreadyExists;
-import hla.rti1516e.exceptions.FederationExecutionDoesNotExist;
-import hla.rti1516e.exceptions.RTIexception;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
@@ -30,6 +29,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 public class PociagFederate {
     //----------------------------------------------------------
@@ -53,7 +53,7 @@ public class PociagFederate {
     private PociagFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
-
+    public Pociag pociag;
     // caches of handle types - set once we join a federation
     protected ObjectClassHandle storageHandle;
     protected AttributeHandle storageMaxHandle;
@@ -64,6 +64,16 @@ public class PociagFederate {
     protected InteractionClassHandle newPasazerHandle;
     protected ParameterHandle newClientInteractionClassClientIdParameterHandle;
     protected InteractionClassHandle checkBiletInteractionHandle;
+    protected InteractionClassHandle subscribePassengerObjectHandle;
+    protected ParameterHandle passengerObjectHandle;
+
+    private InteractionClassHandle sendInformationAboutPassengerForStatistics;
+    private ParameterHandle countOfCheckedPassenger;
+    private ParameterHandle countOfPassengerWithoutBilet;
+    private ParameterHandle countOfPassengerWITHBilet;
+    private ParameterHandle countOfPassengerWITHBiletfromALL;
+    private ParameterHandle countOfPassengerWITHOUTTBiletfromALL;
+    private ParameterHandle CountOfSeatedPassengerInTrain;
 //    private InteractionClassHandle SzukajMiejscaHandle;
 
     //----------------------------------------------------------
@@ -208,22 +218,43 @@ public class PociagFederate {
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-//        Pociag pociag = new Pociag(10);
+        pociag = new Pociag(4);
+        int x = 0;
+
         while (fedamb.isRunning) {
             // update ProductsStorage parameters max and available to current values
             AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
 
-            HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE(Pociag.getInstance().getMax());
-            attributes.put(storageMaxHandle, maxValue.toByteArray());
+//            HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE(Pociag.getInstance().getMax());
+//            attributes.put(storageMaxHandle, maxValue.toByteArray());
 
             HLAinteger32BE availableValue = encoderFactory.createHLAinteger32BE(Pociag.getInstance().getAvailable());
             attributes.put(storageAvailableHandle, availableValue.toByteArray());
 
             rtiamb.updateAttributeValues(objectHandle, attributes, generateTag());
+            int getCountOfCheckedPassengerALL = 0;
+            int getCountOfPassengerWithoutBiletALL = 0;
+            int getCountOfPassengerWITHBiletALL = 0;
+
+            for (Konduktor konduktor : pociag.getKonduktorList()) {
+                int getCountOfCheckedPassenger = konduktor.getCountOfCheckedPassenger();
+                int getCountOfPassengerWithoutBilet = konduktor.getCountOfPassengerWithoutBilet();
+                int getCountOfPassengerWITHBilet = konduktor.getCountOfPassengerWITHBilet();
+                System.out.println(getCountOfCheckedPassenger);
+                getCountOfCheckedPassengerALL = getCountOfCheckedPassengerALL + getCountOfCheckedPassenger;
+                getCountOfPassengerWithoutBiletALL = getCountOfPassengerWithoutBiletALL + getCountOfPassengerWithoutBilet;
+                getCountOfPassengerWITHBiletALL = getCountOfPassengerWITHBiletALL + getCountOfPassengerWITHBilet;
+                if (getCountOfCheckedPassengerALL != x) {
+                    changeNumberAboutPassenger(getCountOfCheckedPassengerALL, getCountOfPassengerWithoutBiletALL, getCountOfPassengerWITHBiletALL);
+                    x = getCountOfCheckedPassengerALL;
+                }
+            }
+
 
             advanceTime(fedamb.federateLookahead);
             log("Time Advanced to " + fedamb.federateTime);
         }
+
 
         //////////////////////////////////////
         // 11. delete the object we created //
@@ -250,6 +281,43 @@ public class PociagFederate {
         } catch (FederatesCurrentlyJoined fcj) {
             log("Didn't destroy federation, federates still joined");
         }
+    }
+
+    //    wysylanie zmian odosnie liczb pasazerow, tj obecnych i z biletem i bez biletu
+    private void changeNumberAboutPassenger(int getCountOfCheckedPassengerALL, int getCountOfPassengerWithoutBiletALL, int getCountOfPassengerWITHBiletALL) throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress, InvalidLogicalTime {
+        
+
+        ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(5);
+
+        ParameterHandle countOfCheckedPassengerParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForStatistics, "countOfCheckedPassenger");
+        HLAinteger32BE CountOfCheckedPassenger = encoderFactory.createHLAinteger32BE(getCountOfCheckedPassengerALL);
+
+        ParameterHandle CountOfPassengerWithoutBiletParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForStatistics, "countOfPassengerWithoutBilet");
+        HLAinteger32BE CountOfPassengerWithoutBiletPassenger = encoderFactory.createHLAinteger32BE(getCountOfPassengerWithoutBiletALL);
+
+        ParameterHandle CountOfPassengerWITHBiletParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForStatistics, "countOfPassengerWITHBilet");
+        HLAinteger32BE CountOfPassengerWITHBilet = encoderFactory.createHLAinteger32BE(getCountOfPassengerWITHBiletALL);
+
+        ParameterHandle CountOfPassengerWITHBiletFromAllParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForStatistics, "countOfPassengerWITHBiletFromAllPassenger");
+        HLAinteger32BE CountOfPassengerWITHBiletFromALL = encoderFactory.createHLAinteger32BE(pociag.passengerWithBilet);
+
+        ParameterHandle CountOfPassengerWITHOUTBiletFromAllParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForStatistics, "countOfPassengerWITHOUTBiletFromAllPassenger");
+        HLAinteger32BE CountOfPassengerWITHOUTBiletFromALL = encoderFactory.createHLAinteger32BE(pociag.passengerWithoutBilet);
+
+        ParameterHandle CountOfSeatedPassengerParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForStatistics, "CountOfSeatedPassengerInTrain");
+        HLAinteger32BE CountOfSeatedPassenger = encoderFactory.createHLAinteger32BE(pociag.getAllPassengerSeated());
+        
+        
+
+        parameterHandleValueMap.put(countOfCheckedPassengerParameter, CountOfCheckedPassenger.toByteArray());
+        parameterHandleValueMap.put(CountOfPassengerWithoutBiletParameter, CountOfPassengerWithoutBiletPassenger.toByteArray());
+        parameterHandleValueMap.put(CountOfPassengerWITHBiletParameter, CountOfPassengerWITHBilet.toByteArray());
+        parameterHandleValueMap.put(CountOfPassengerWITHBiletFromAllParameter, CountOfPassengerWITHBiletFromALL.toByteArray());
+        parameterHandleValueMap.put(CountOfPassengerWITHOUTBiletFromAllParameter, CountOfPassengerWITHOUTBiletFromALL.toByteArray());
+        parameterHandleValueMap.put(CountOfSeatedPassengerParameter, CountOfSeatedPassenger.toByteArray());
+        
+        rtiamb.sendInteraction(this.sendInformationAboutPassengerForStatistics, parameterHandleValueMap, generateTag());
+
     }
 
     ////////////////////////////////////////////////////////////////////////////
@@ -306,18 +374,36 @@ public class PociagFederate {
         rtiamb.publishObjectClassAttributes(storageHandle, attributes);
 
 //        subscribe szukaj miejsca
-        String inames = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
-        checkBiletInteractionHandle = rtiamb.getInteractionClassHandle( inames );
-
-//        subscribe cehckbilet interaction
-        String iname = "HLAinteractionRoot.PasazerManagment.CheckBilet";
-        SzukajMiejscaHandle = rtiamb.getInteractionClassHandle( iname );
-
-
+        String iname = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
+        SzukajMiejscaHandle = rtiamb.getInteractionClassHandle(iname);
         //get count parameter for PasazerManagment Interaction
         countHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SzukajMiejsca"), "count");
         rtiamb.subscribeInteractionClass(SzukajMiejscaHandle);
 
+//        subscribe cehckbilet interaction
+        String inames = "HLAinteractionRoot.PasazerManagment.CheckBilet";
+        checkBiletInteractionHandle = rtiamb.getInteractionClassHandle(inames);
+        this.rtiamb.subscribeInteractionClass(this.checkBiletInteractionHandle);
+
+
+//      subscribe subscribePassengerObjectHandle interaction
+        subscribePassengerObjectHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.SendPassengerObjectToTrainAndStatistics");
+        //get object parameter for subscribePassengerObjectHandle Interaction
+        passengerObjectHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SendPassengerObjectToTrainAndStatistics"), "passengerObject");
+        rtiamb.subscribeInteractionClass(subscribePassengerObjectHandle);
+
+        
+        ////	publish sendInformationAboutPassengerForStatistics interaction
+        this.sendInformationAboutPassengerForStatistics = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics");
+        this.countOfCheckedPassenger = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfCheckedPassenger");
+        this.countOfPassengerWithoutBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWithoutBilet");
+        this.countOfPassengerWITHBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
+        this.countOfPassengerWITHBiletfromALL = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBiletFromAllPassenger");
+        this.countOfPassengerWITHOUTTBiletfromALL = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHOUTBiletFromAllPassenger");
+        this.CountOfSeatedPassengerInTrain = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "CountOfSeatedPassengerInTrain");
+
+        // do the publication
+        this.rtiamb.publishInteractionClass(this.sendInformationAboutPassengerForStatistics);
 
 
     }
@@ -327,7 +413,7 @@ public class PociagFederate {
      * timestep. It will then wait until a notification of the time advance grant
      * has been received.
      */
-    private void advanceTime(double timestep) throws RTIexception {
+    protected void advanceTime(double timestep) throws RTIexception {
         // request the advance
         fedamb.isAdvancing = true;
         HLAfloat64Time time = timeFactory.makeTime(fedamb.federateTime + timestep);
@@ -365,6 +451,21 @@ public class PociagFederate {
         } catch (Exception rtie) {
             // an exception occurred, just log the information and exit
             rtie.printStackTrace();
+        }
+    }
+
+    protected void checkInteraction() throws RTIexception, InterruptedException {
+        for (Wagon wagon : pociag.getWagonList()) {
+            List<Pasazer> passengerList;
+            passengerList = wagon.getListPassengerInWagon();
+            int index = 0;
+            index = pociag.getWagonList().indexOf(wagon);
+            for (Pasazer pasazer : passengerList) {
+                if (!pasazer.checked) {
+                    pociag.konduktorList.get(index).checkBilet(pasazer);
+                    break;
+                }
+            }
         }
     }
 }

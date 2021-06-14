@@ -19,12 +19,12 @@ import Pociag.Pociag;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.HLAinteger32BE;
-import hla.rti1516e.exceptions.FederateInternalError;
+import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Time;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger64BE;
 
-import static Pociag.Pociag.registerPasazer;
+import Pociag.Pociag;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -292,15 +292,31 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
                 federate.storageMax = deco.getValue();
                 int liczbaPasazerowDoStworzenia = deco.getValue();
                 builder.append("Liczba pasazerow do stworzenia:  " + "\n").append(liczbaPasazerowDoStworzenia);
-                for (int i = 1; i <= liczbaPasazerowDoStworzenia; i++) {
-                    Pasazer pasazer = new Pasazer(PasazerFederate.getGlobalID());
-                    Pociag.getInstance().registerPasazer(pasazer);
-                    builder.append("getWagonListSize1 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(0) + "\n"); // x to numer wagony do którego sie odnosimy
-                    builder.append("getWagonListSize2 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(1) + "\n"); // x to numer wagony do którego sie odnosimy
-                    builder.append("getWagonListSize3 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(2) + "\n"); // x to numer wagony do którego sie odnosimy
-                    builder.append("getWagonListSize4 " + Pociag.getInstance().getPasazerowieWagonListSizeFromPociag(3) + "\n"); // x to numer wagony do którego sie odnosimy
 
+                try {
+                    federate.sendPassenger(liczbaPasazerowDoStworzenia);
+                } catch (FederateNotExecutionMember federateNotExecutionMember) {
+                    federateNotExecutionMember.printStackTrace();
+                } catch (NotConnected notConnected) {
+                    notConnected.printStackTrace();
+                } catch (NameNotFound nameNotFound) {
+                    nameNotFound.printStackTrace();
+                } catch (InvalidInteractionClassHandle invalidInteractionClassHandle) {
+                    invalidInteractionClassHandle.printStackTrace();
+                } catch (RTIinternalError rtIinternalError) {
+                    rtIinternalError.printStackTrace();
+                } catch (InteractionClassNotPublished interactionClassNotPublished) {
+                    interactionClassNotPublished.printStackTrace();
+                } catch (InteractionParameterNotDefined interactionParameterNotDefined) {
+                    interactionParameterNotDefined.printStackTrace();
+                } catch (InteractionClassNotDefined interactionClassNotDefined) {
+                    interactionClassNotDefined.printStackTrace();
+                } catch (SaveInProgress saveInProgress) {
+                    saveInProgress.printStackTrace();
+                } catch (RestoreInProgress restoreInProgress) {
+                    restoreInProgress.printStackTrace();
                 }
+
 
             }
 
@@ -320,6 +336,8 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
         }
         log(builder.toString());
     }
+
+
 
     @Override
     public void removeObjectInstance(ObjectInstanceHandle theObject,
@@ -342,4 +360,5 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
 
         return standPassengerSize;
     }
+
 }

@@ -12,8 +12,9 @@
  *   (that goes for your lawyer as well)
  *
  */
-package Konduktor;
+package Statystyki;
 
+import GUI.DisplayGUI;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
@@ -22,53 +23,57 @@ import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 
+import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static GUI.DisplayGUI.setStatistics;
+
 
 /*
 
 
  * TODO LIST
- * DOWIEDZIEC SIE CZEMU SIE PIERDOLI ADVANCE TIME
- * DOWIEDZIEC SIE CZEMU W PASAZERZE NIC NIE DZIALA
- * DOWIEDZIEC SIE CO DALEJ ROBIC ZEBY TO ZROBIC :<
+ * przespisac funkcje gui ze statystyki do gui federat ale w tym celu:
+ dołożyc przesyłanie interakcji do gui, odnosnie statystyk w pociagu
+ zrobic rysowanie nowych kropek w pociagach gdy pojawia sie tam pasazer
  *
  *
  * */
 
-public class KonduktorFederate {
+public class StatystykiFederate {
     /**
      * The sync point all federates will sync up on before starting
      */
     public static final String READY_TO_RUN = "ReadyToRun";
-    public static final double CHECKTIME = 4.0;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
     private RTIambassador rtiamb;
-    private KonduktorFederateAmbassador fedamb;  // created when we connect
+    private StatystykiFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
     protected int liczbaPasazerow = 0;
+    protected InteractionClassHandle InformationAboutPassengerForStatisticsaHandle;
+    protected ParameterHandle countOfCheckedPassengerHandle;
+    protected ParameterHandle countOfPassengerWithoutBiletHandle;
+    protected ParameterHandle countOfPassengerWITHBiletHandle;
+    protected ParameterHandle countOfPassengerWITHBiletFromALLHandle;
+    protected ParameterHandle countOfPassengerWITHOUTBiletFromALLHandle;
+    protected ParameterHandle CountOfSeatedPassengerInTrainHandle;
+
+    private int allPassenger = 0;
+    private double probabilityWithoutBilet = 0;
+    private double probabilitySeated = 0;
+    DisplayGUI gui = new DisplayGUI();
+
+
     // caches of handle types - set once we join a federation
-    protected AttributeHandle storageMaxHandle;
-    protected AttributeHandle storageAvailableHandle;
-    protected InteractionClassHandle addNewKonduktorHandle;
-    protected int numberOfKonduktor = 0;
-    protected int maksymalnaLiczbaMiejscSiedzacych = 0;
-    protected int liczbaDostepnychMiejscSiedzacych = 0;
-    protected ParameterHandle addNewKonduktorCount;
-    private InteractionClassHandle checkBiletInteractionHandle;
-    private InteractionClassHandle addNewKonduktorCountHandle;
-    private InteractionClassHandle sendInformationAboutPassengerForStatistics;
-    private ParameterHandle countOfCheckedPassenger;
-    private ParameterHandle countOfPassengerWithoutBilet;
-    private ParameterHandle countOfPassengerWITHBilet;
+
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -117,7 +122,7 @@ public class KonduktorFederate {
 
         // connect
         log("Connecting...");
-        fedamb = new KonduktorFederateAmbassador(this);
+        fedamb = new StatystykiFederateAmbassador(this);
         rtiamb.connect(fedamb, CallbackModel.HLA_EVOKED);
 
         //////////////////////////////
@@ -146,7 +151,7 @@ public class KonduktorFederate {
         ////////////////////////////
 
         rtiamb.joinFederationExecution(federateName,            // name for the federate
-                "Konduktor",   // federate type
+                "Statystyki",   // federate type
                 "PociagFederation"     // name of federation
         );           // modules we want to add
 
@@ -205,20 +210,14 @@ public class KonduktorFederate {
         // here is where we do the meat of our work. in each iteration, we will
         // update the attribute values of the object we registered, and will
         // send an interaction.
-        int x = 0;
+
         while (fedamb.isRunning) {
-//            int getCountOfCheckedPassenger = Konduktor.getInstanceKonduktor().getCountOfCheckedPassenger();
-//
-//            System.out.println(getCountOfCheckedPassenger);
-//            if (getCountOfCheckedPassenger != x) {
-//                changeNumberAboutPassenger();
-//                x = getCountOfCheckedPassenger;
-//            }
 
-            checkBiletInteraction(); // wywołanie inrekacji wysyłającej informacje o rozpoczęciu sprawdzania biletów
-//            advanceTime(fedamb.federateLookahead +);
 
-            advanceTime(CHECKTIME);
+            calcStat();
+            guiMethod(fedamb.federateTime);
+//            advanceTime(fedamb.federateLookahead);
+            advanceTime(2.0);
             log("Time Advanced to " + fedamb.federateTime);
 
         }
@@ -245,9 +244,32 @@ public class KonduktorFederate {
         }
     }
 
+    private void calcStat() {
+        allPassenger = fedamb.countOfPassengerWITHOUTBiletFromAll + fedamb.countOfPassengerWITHBiletFromAll;
+        System.out.println("no bilet checked " + fedamb.countOfPassengerWithoutBilet);
+        if (allPassenger > 0) {
+            probabilityWithoutBilet = (double) fedamb.countOfPassengerWithoutBilet / (double) allPassenger;
+            System.out.println("############prawd przejechania bez biletu " + probabilityWithoutBilet + " ########");
+            probabilitySeated = (double) fedamb.CountOfSeatedPassengerInTrain / (double) allPassenger;
+            if (probabilitySeated > 1) {
+                this.probabilitySeated = 1.0;
+            }
+            System.out.println("############prawd zajecia miejsca " + probabilitySeated + " ########");
+        }
+
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Helper Methods //////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
+
+    protected void guiMethod(double federateTime) {
+
+        Thread watekPierwszy = new Thread(gui);
+
+        watekPierwszy.start();
+        setStatistics(probabilityWithoutBilet, probabilitySeated, federateTime, gui );
+    }
 
     /**
      * This method will attempt to enable the various time related properties for
@@ -255,17 +277,6 @@ public class KonduktorFederate {
      *
      * @param
      */
-
-
-    private void checkBiletInteraction() throws Exception {
-
-//		publishAndSubscribe();
-        ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
-        rtiamb.sendInteraction(checkBiletInteractionHandle, parameterHandleValueMap, generateTag());
-
-    }
-
-
 
     private void enableTimePolicy() throws Exception {
         // NOTE: Unfortunately, the LogicalTime/LogicalTimeInterval create code is
@@ -303,28 +314,21 @@ public class KonduktorFederate {
     private void publishAndSubscribe() throws RTIexception {
         System.out.println("wait for publish");
 
-////	publish checkBilet interaction
-        String iname = "HLAinteractionRoot.PasazerManagment.CheckBilet";
-        this.checkBiletInteractionHandle = rtiamb.getInteractionClassHandle(iname);
-        // do the publication
-        this.rtiamb.publishInteractionClass(this.checkBiletInteractionHandle);
+
+        //        subscribe changeNumberAboutPassenger
+
+        InformationAboutPassengerForStatisticsaHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics");
+        //get count parameter for PasazerManagment Interaction
+        countOfCheckedPassengerHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfCheckedPassenger");
+        countOfPassengerWithoutBiletHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWithoutBilet");
+        countOfPassengerWITHBiletHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
+        countOfPassengerWITHBiletFromALLHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBiletFromAllPassenger");
+        countOfPassengerWITHOUTBiletFromALLHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHOUTBiletFromAllPassenger");
+        CountOfSeatedPassengerInTrainHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "CountOfSeatedPassengerInTrain");
 
 
-////	publish sendStandPassengerSize interaction
-        this.addNewKonduktorHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.NewKonduktor");
-        this.addNewKonduktorCount = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.NewKonduktor"), "countNewKonduktor");
+        rtiamb.subscribeInteractionClass(InformationAboutPassengerForStatisticsaHandle);
 
-        // do the publication
-        this.rtiamb.publishInteractionClass(this.addNewKonduktorHandle);
-
-
-        ////	publish sendInformationAboutPassengerForStatistics interaction
-        this.sendInformationAboutPassengerForStatistics = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics");
-        this.countOfCheckedPassenger = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfCheckedPassenger");
-        this.countOfPassengerWithoutBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWithoutBilet");
-        this.countOfPassengerWITHBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
-        // do the publication
-        this.rtiamb.publishInteractionClass(this.sendInformationAboutPassengerForStatistics);
 
     }
 
@@ -364,14 +368,14 @@ public class KonduktorFederate {
     //----------------------------------------------------------
     public static void main(String[] args) {
         // get a federate name, use "exampleFederate" as default
-        String federateName = "Konduktor";
+        String federateName = "Statystyki";
         if (args.length != 0) {
             federateName = args[0];
         }
 
         try {
             // run the example federate
-            new KonduktorFederate().runFederate(federateName);
+            new StatystykiFederate().runFederate(federateName);
         } catch (Exception rtie) {
             // an exception occurred, just log the information and exit
             rtie.printStackTrace();

@@ -63,7 +63,7 @@ public class GUIFederate {
     protected InteractionClassHandle addNewPasazerHandle;
     protected int aktualnaLiczbaPasazerow;
     protected int maksymalnaLiczbaMiejscSiedzacych = 0;
-    protected int maksymalnaLiczbaPasazerow = 99;
+    protected int maksymalnaLiczbaPasazerow = 339;
     protected int liczbaDostepnychMiejscSiedzacych = 0;
     private ParameterHandle countNewPasazerHandle;
     protected InteractionClassHandle standPassengerHandleHandle;
@@ -208,7 +208,7 @@ public class GUIFederate {
         while (fedamb.isRunning) {
 
 //			PASAZEROWIE SIADAJA ZAWSZE DO POCIAGU ALE NIE ZAWSZE ZNAJDUJA MIEJSCE
-
+            System.out.println("aktualnaLiczbaPasazerow " + aktualnaLiczbaPasazerow);
             if (maksymalnaLiczbaPasazerow >= aktualnaLiczbaPasazerow) {
                 int liczbaWsiadajacychPasazerow = gui.wsiadanie();
                 adddNewPasazer(liczbaWsiadajacychPasazerow); // dodawanie nowych pasazerow do pociagu

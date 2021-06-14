@@ -54,20 +54,6 @@
                     <dataType>HLAinteger32BE</dataType>
                     <semantics>Liczba pasazerow ktora wsiadla</semantics>
                 </parameter>
-                <!--                <interactionClass>-->
-                <!--                    <name>AddPasazer</name>-->
-                <!--                    <sharing>PublishSubscribe</sharing>-->
-                <!--                    <transportation>HLAreliable</transportation>-->
-                <!--                    <order>Receive</order>-->
-                <!--                    <semantics>Zdarzenie dodania nowych pasazerow</semantics>-->
-                <!--                </interactionClass>-->
-                <!--                <interactionClass>-->
-                <!--                    <name>GetProducts</name>-->
-                <!--                    <sharing>Publish</sharing>-->
-                <!--                    <transportation>HLAbestEffort</transportation>-->
-                <!--                    <order>Receive</order>-->
-                <!--                    <semantics>Zdarzenia pobrania produktow</semantics>-->
-                <!--                </interactionClass>-->
                 <interactionClass>
                     <name>SzukajMiejsca</name>
                     <sharing>Publish</sharing>
@@ -87,14 +73,61 @@
                     </parameter>
                 </interactionClass>
                 <interactionClass>
+                    <name>InformationAboutPassengerForStatistics</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <parameter>
+                        <name>countOfCheckedPassenger</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Liczba obsłużonych pasazerow</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>countOfPassengerWithoutBilet</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Liczba pasazerow bez biletu</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>countOfPassengerWITHBilet</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Liczba pasazerow z biletem</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>countOfPassengerWITHBiletFromAllPassenger</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Liczba pasazerow z biletem spośród wszystkich pasazeró</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>countOfPassengerWITHOUTBiletFromAllPassenger</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Liczba pasazerow bez biletu spośród wszystkich pasazeró</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>CountOfSeatedPassengerInTrain</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>Liczba pasazerow, którzy znaleźli miejsce siedzące</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
                     <name>NewKonduktor</name>
                     <sharing>PublishSubscribe</sharing>
                     <transportation>HLAreliable</transportation>
                     <order>TimeStamp</order>
                     <parameter>
                         <name>countNewKonduktor</name>
-                        <dataType>HLAinteger32BE</dataType>
+                        <fixedDataRecord>HLAinteger32BE</fixedDataRecord>
                         <semantics>Liczba konduktorów</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
+                    <name>SendPassengerObjectToTrainAndStatistics</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <parameter>
+                        <name>passengerObject</name>
+                        <dataType>Pasazer</dataType>
+                        <semantics>Obiekt pasazera</semantics>
                     </parameter>
                 </interactionClass>
                 <interactionClass>
@@ -148,6 +181,21 @@
                     <name>bilet</name>
                     <dataType>HLAboolean</dataType>
                     <semantics>Czy klient ma bilet</semantics>
+                </field>
+                <field>
+                    <name>checked</name>
+                    <dataType>HLAboolean</dataType>
+                    <semantics>Czy pasazer ma sprawdzony bilet</semantics>
+                </field>
+                <field>
+                    <name>tryToSit</name>
+                    <dataType>HLAboolean</dataType>
+                    <semantics>Czy pasazer ma sprawdzony bilet</semantics>
+                </field>
+                <field>
+                    <name>seated</name>
+                    <dataType>HLAboolean</dataType>
+                    <semantics>Czy pasazer ma sprawdzony bilet</semantics>
                 </field>
             </fixedRecordData>
         </fixedRecordDataTypes>

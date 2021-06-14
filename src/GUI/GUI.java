@@ -22,7 +22,7 @@ public class GUI {
     public int wsiadanie() {
         int czasPoprzeniejStacji = 0;
         timeToNext = generateTimeToNext();
-        int count = random.nextInt(4) + 1;
+        int count = random.nextInt(14) + 1;
         System.out.println("Wsiadlo  " + count + " nowych pasazerow. Nastepny przystanek za: " + timeToNext);
         return count;
     }

@@ -4,26 +4,26 @@ import Konduktor.Konduktor;
 import Pasazer.Pasazer;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-/**
- * Created by Stanislaw on 08.05.2018.
- */
+
 public class Pociag {
 
     private static List<Wagon> wagonList; //lista wagonow w pociagu
-//    private static List<Konduktor> konduktorList; //lista konduktorów w pociagu
+    protected static List<Konduktor> konduktorList = new ArrayList<>();
+    protected int passengerWithBilet = 0;
+    protected int passengerWithoutBilet = 0;
+
     Pociag(int iloscWagon) {
         wagonList = new ArrayList<>();
         for (int i = 0; i < iloscWagon; i++) {
+            Konduktor konduktor = new Konduktor();
+            konduktorList.add(konduktor);
             wagonList.add(new Wagon());
-//            konduktorList.add(new Konduktor()); // Dla każdego wagonu zostaje utworzony jeden konduktor
         }
     }
 
     private int available;
-    private int max;
     private static Pociag instance = null;
 
 
@@ -37,25 +37,27 @@ public class Pociag {
     }
 
 
-    public static boolean registerPasazer(Pasazer pasazer) {
+    public boolean registerPasazer(Pasazer pasazer) {
+        pasazer.setPasazerBilet(pasazer);
+        if (pasazer.getPasazerBilet()) {
+            passengerWithBilet = passengerWithBilet + 1;
+        } else {
+            passengerWithoutBilet = passengerWithoutBilet + 1;
+        }
         boolean seated = false;
         int tmp = 999999999;
         int index = 0;
         for (Wagon wagon : wagonList) {
-            int siz = wagon.pasazerList.size();
+            int siz = Wagon.pasazerList.size();
             if (tmp > siz) {
                 tmp = siz;
                 index = wagonList.indexOf(wagon);
             }
-//            return Collections.min(wagonList.get(wagon).size())
         }
-//            System.out.println("Numer obsługiwanego wagonu : " + wagonList.indexOf(wagon));
-//            int actualElemnt = wagonList.indexOf(wagon);
+//      DODAWANIE PASAZEROW DO MIEJSC SIEDZACYCH W PRZEDZIALACH
         if (!seated) {
-            System.out.println("Czy pasazer ma bilet :" + pasazer.getPasazerBilet());
-            System.out.println("ID pasazera :" + pasazer.getPasazerID());
-//            System.out.println("ID wagonu :" + index);
             seated = wagonList.get(index).registerPasazer(pasazer);
+
         }
 
 //      dodawanie pasazerow do miejsc stojacych
@@ -66,8 +68,9 @@ public class Pociag {
         return seated;
     }
 
-    public int getWagonListSize() {
-        return wagonList.size();
+
+    public static List<Wagon> getWagonList() {
+        return wagonList;
     }
 
     public int getPasazerowieWagonListSizeFromPociag(int x) {
@@ -78,17 +81,17 @@ public class Pociag {
         return available;
     }
 
-    public void setAvailable(int available) {
-        this.available = available;
+    public List<Konduktor> getKonduktorList() {
+        return konduktorList;
     }
 
-    public int getMax() {
-        return max;
-    }
+    public int getAllPassengerSeated() {
+        int AllPassengerSeated = 0;
+        for (Wagon wagon : wagonList) {
+            AllPassengerSeated = AllPassengerSeated + wagon.getWagonPassengerSeated();
+        }
+        return AllPassengerSeated;
 
-    public void setMax(int max) {
-        this.max = max;
     }
-
 
 }

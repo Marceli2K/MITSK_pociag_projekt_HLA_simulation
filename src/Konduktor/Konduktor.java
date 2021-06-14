@@ -12,23 +12,26 @@ import java.util.Random;
 public class Konduktor {
     private Random random;
     private static Konduktor instance = null;
+    protected int countOfCheckedPassenger = 0;
+    protected int countOfPassengerWithoutBilet = 0;
+    protected int countOfPassengerWITHBilet = 0;
 
     public Konduktor() {
         random = new Random();
     }
 
-    public int numberofKonduktors() {
-        int count = random.nextInt(4) + 1;
-        System.out.println("Liczba konduktorów w pociągu  " + count);
-        return count;
-    }
-
-    public void checkBilets(Pasazer pasazer) {
+    public void checkBilet(Pasazer pasazer) {
         if (pasazer.checked == false) {
+            System.out.println("czy pasazer ma bilet " + pasazer.getPasazerBilet());
+            countOfCheckedPassenger += 1;
             if (pasazer.getPasazerBilet()) {
                 System.out.println("Pasazer o id : " + pasazer.getPasazerID() + " ma bilet  ");
+                countOfPassengerWithoutBilet += 1;
+                pasazer.setChecked();
             } else {
                 System.out.println("Pasazer o id : " + pasazer.getPasazerID() + " nie ma biletu  ");
+                countOfPassengerWITHBilet += 1;
+                pasazer.setChecked();
             }
         } else {
             System.out.println("Pasazer o id : " + pasazer.getPasazerID() + " ma juz sprawdzony bilet  ");
@@ -38,6 +41,18 @@ public class Konduktor {
 
     static void setInstance() {
         if (instance == null) instance = new Konduktor();
+    }
+
+    public int getCountOfCheckedPassenger() {
+        return countOfCheckedPassenger;
+    }
+
+    public int getCountOfPassengerWithoutBilet() {
+        return countOfPassengerWithoutBilet;
+    }
+
+    public int getCountOfPassengerWITHBilet() {
+        return countOfPassengerWITHBilet;
     }
 
     static public Konduktor getInstanceKonduktor() {

@@ -12,36 +12,21 @@
  *   (that goes for your lawyer as well)
  *
  */
-package Pociag;
+package Statystyki;
 
-import Konduktor.Konduktor;
-import Pasazer.Pasazer;
-import hla.rti1516e.AttributeHandle;
-import hla.rti1516e.AttributeHandleValueMap;
-import hla.rti1516e.FederateHandleSet;
-import hla.rti1516e.InteractionClassHandle;
-import hla.rti1516e.LogicalTime;
-import hla.rti1516e.NullFederateAmbassador;
-import hla.rti1516e.ObjectClassHandle;
-import hla.rti1516e.ObjectInstanceHandle;
-import hla.rti1516e.OrderType;
-import hla.rti1516e.ParameterHandle;
-import hla.rti1516e.ParameterHandleValueMap;
-import hla.rti1516e.SynchronizationPointFailureReason;
-import hla.rti1516e.TransportationTypeHandle;
+import hla.rti1516e.*;
 import hla.rti1516e.encoding.DecoderException;
+import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.FederateInternalError;
-import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
-
-import java.util.List;
+import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger32BE;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
- * {@link PociagFederate}. It will log information about any callbacks it
+ * {@link StatystykiFederate}. It will log information about any callbacks it
  * receives, thus demonstrating how to deal with the provided callback information.
  */
-public class PociagFederateAmbassador extends NullFederateAmbassador {
+public class StatystykiFederateAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     //                    STATIC VARIABLES
     //----------------------------------------------------------
@@ -49,11 +34,18 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
     //----------------------------------------------------------
-    private PociagFederate federate;
+    private StatystykiFederate federate;
 
     // these variables are accessible in the package
     protected double federateTime = 0.0;
     protected double federateLookahead = 1.0;
+
+    protected int countOfPassengerWITHBiletFromAll=0;
+    protected int countOfPassengerWITHBilet=0;
+    protected int countOfPassengerWithoutBilet=0;
+    protected int countOfCheckedPassenger=0;
+    protected int countOfPassengerWITHOUTBiletFromAll=0;
+    protected int CountOfSeatedPassengerInTrain = 0;
 
     protected boolean isRegulating = false;
     protected boolean isConstrained = false;
@@ -62,13 +54,15 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     protected boolean isAnnounced = false;
     protected boolean isReadyToRun = false;
 
+
     protected boolean isRunning = true;
+
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
 
-    public PociagFederateAmbassador(PociagFederate federate) {
+    public StatystykiFederateAmbassador(StatystykiFederate federate) {
         this.federate = federate;
     }
 
@@ -78,6 +72,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     private void log(String message) {
         System.out.println("FederateAmbassador: " + message);
     }
+
 
     //////////////////////////////////////////////////////////////////////////
     ////////////////////////// RTI Callback Methods //////////////////////////
@@ -96,14 +91,14 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     @Override
     public void announceSynchronizationPoint(String label, byte[] tag) {
         log("Synchronization point announced: " + label);
-        if (label.equals(PociagFederate.READY_TO_RUN))
+        if (label.equals(StatystykiFederate.READY_TO_RUN))
             this.isAnnounced = true;
     }
 
     @Override
     public void federationSynchronized(String label, FederateHandleSet failed) {
         log("Federation Synchronized: " + label);
-        if (label.equals(PociagFederate.READY_TO_RUN))
+        if (label.equals(StatystykiFederate.READY_TO_RUN))
             this.isReadyToRun = true;
     }
 
@@ -176,7 +171,9 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
         builder.append(", tag=" + new String(tag));
         // print the time (if we have it) we'll get null if we are just receiving
         // a forwarded call from the other reflect callback above
-
+        if (time != null) {
+            builder.append(", time=" + ((HLAfloat64Time) time).getValue());
+        }
 
         // print the attribute information
         builder.append(", attributeCount=" + theAttributes.size());
@@ -186,6 +183,39 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
             builder.append("\tattributeHandle=");
 
             // if we're dealing with Flavor, decode into the appropriate enum value
+//			if( attributeHandle.equals(federate.storageAvailableHandle) )
+//			{
+//				builder.append( attributeHandle );
+//				builder.append( " (Available)    " );
+//				builder.append( ", attributeValue=" );
+//				HLAinteger32BE available = new HLA1516eInteger32BE();
+//				try {
+//					available.decode(theAttributes.get(attributeHandle));
+//				} catch (DecoderException e) {
+//					e.printStackTrace();
+//				}
+//				builder.append( available.getValue() );
+//				federate.liczbaDostepnychMiejscSiedzacych = available.getValue();
+//			}
+//			else if( attributeHandle.equals(federate.storageMaxHandle) )
+//			{
+//				builder.append( attributeHandle );
+//				builder.append( " (Max)" );
+//				builder.append( ", attributeValue=" );
+//				HLAinteger32BE max = new HLA1516eInteger32BE();
+//				try {
+//					max.decode(theAttributes.get(attributeHandle));
+//				} catch (DecoderException e) {
+//					e.printStackTrace();
+//				}
+//				builder.append( max.getValue() );
+//				federate.maksymalnaLiczbaMiejscSiedzacych = max.getValue();
+//			}
+//			else
+//			{
+//				builder.append( attributeHandle );
+//				builder.append( " (Unknown)   " );
+//			}
 
             builder.append("\n");
         }
@@ -223,20 +253,15 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
                                    LogicalTime time,
                                    OrderType receivedOrdering,
                                    SupplementalReceiveInfo receiveInfo)
-            throws FederateInternalError  {
+            throws FederateInternalError {
         StringBuilder builder = new StringBuilder("Interaction Received:");
 
         // print the handle
         builder.append(" handle=" + interactionClass);
-        if (interactionClass.equals(federate.AddPasazerHandle)) {
-            builder.append(" (AddPasazer)");
-        } else if (interactionClass.equals(federate.getProductsHandle)) {
-            builder.append(" (GetProducts)");
-        } else if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
-            builder.append(" (SzukajMiejsca)");
-
+        if (interactionClass.equals(federate.InformationAboutPassengerForStatisticsaHandle)) {
+            builder.append(" (addNewKonduktorHandle)");
         }
-//        Pociag pociag = Pociag.getInstance();
+
         // print the tag
         builder.append(", tag=" + new String(tag));
         // print the time (if we have it) we'll get null if we are just receiving
@@ -248,43 +273,82 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
         // print the parameer information
         builder.append(", parameterCount=" + theParameters.size());
         builder.append("\n");
-        if (interactionClass.equals(federate.SzukajMiejscaHandle)) {
-//            builder.append(", pasazer szuka miejsca" );
-
-        }
-        if (interactionClass.equals(federate.checkBiletInteractionHandle)) {
-            builder.append(" (checkBiletInteraction)");
-            try {
-                federate.checkInteraction(); // SPrawdzenie biletu przez konduktora
-            } catch (RTIexception | InterruptedException rtIexception) {
-                rtIexception.printStackTrace();
-            }
-        }
-        for (
-                ParameterHandle parameter : theParameters.keySet()) {
-
-            if (parameter.equals(federate.countHandle)) {
-
-            } else {
-                // print the parameter handle
-                builder.append("\tparamHandle=");
-                builder.append(parameter);
-                // print the parameter value
-                builder.append(", paramValue=");
-                builder.append(theParameters.get(parameter).length);
-                builder.append(" bytes");
-                builder.append("\n");
-            }
-            if (parameter.equals(federate.passengerObjectHandle)) {
-                Pasazer passenger = new Pasazer(0);
+        for (ParameterHandle parameter : theParameters.keySet()) {
+            if (parameter.equals(federate.countOfCheckedPassengerHandle)) {
+                HLAinteger32BE deco = new HLA1516eInteger32BE();
                 try {
-                    passenger.decode(theParameters.get(parameter));
+                    deco.decode(theParameters.get(parameter));
                 } catch (DecoderException e) {
                     e.printStackTrace();
                 }
-                federate.pociag.registerPasazer(passenger);
-
+                builder.append(deco.getValue());
+                countOfCheckedPassenger = deco.getValue();
+                builder.append("\nLiczba pasazerow ze sprawdzonym biletem:  " ).append(countOfCheckedPassenger);
             }
+            if (parameter.equals(federate.countOfPassengerWithoutBiletHandle)) {
+                HLAinteger32BE deco = new HLA1516eInteger32BE();
+                try {
+                    deco.decode(theParameters.get(parameter));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(deco.getValue());
+                countOfPassengerWithoutBilet = deco.getValue();
+                builder.append("\nLiczba pasazerow bez biletu:  " ).append(countOfPassengerWithoutBilet);
+            }
+            if (parameter.equals(federate.countOfPassengerWITHBiletHandle)) {
+                HLAinteger32BE deco = new HLA1516eInteger32BE();
+                try {
+                    deco.decode(theParameters.get(parameter));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(deco.getValue());
+                countOfPassengerWITHBilet = deco.getValue();
+                builder.append("\nLiczba pasazerow z biletem :  " ).append(countOfPassengerWITHBilet);
+            }
+            if (parameter.equals(federate.countOfPassengerWITHBiletFromALLHandle)) {
+                HLAinteger32BE deco = new HLA1516eInteger32BE();
+                try {
+                    deco.decode(theParameters.get(parameter));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(deco.getValue());
+                countOfPassengerWITHBiletFromAll = deco.getValue();
+                builder.append("\nLiczba wszystkich pasazerow w pociagu z biletem :  " ).append(countOfPassengerWITHBiletFromAll);
+            }
+
+            if (parameter.equals(federate.countOfPassengerWITHOUTBiletFromALLHandle)) {
+                HLAinteger32BE deco = new HLA1516eInteger32BE();
+                try {
+                    deco.decode(theParameters.get(parameter));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(deco.getValue());
+                countOfPassengerWITHOUTBiletFromAll = deco.getValue();
+                builder.append("\nLiczba wszystkich pasazerow w pociagu z biletem :  " ).append(countOfPassengerWITHOUTBiletFromAll);
+            }
+            if (parameter.equals(federate.CountOfSeatedPassengerInTrainHandle)) {
+                HLAinteger32BE deco = new HLA1516eInteger32BE();
+                try {
+                    deco.decode(theParameters.get(parameter));
+                } catch (DecoderException e) {
+                    e.printStackTrace();
+                }
+                builder.append(deco.getValue());
+                CountOfSeatedPassengerInTrain = deco.getValue();
+                builder.append("\nLiczba wszystkich pasazerow w pociagu z biletem :  " ).append(CountOfSeatedPassengerInTrain);
+            }
+            // print the parameter handle
+            builder.append("\tparamHandle=");
+            builder.append(parameter);
+            // print the parameter value
+            builder.append(", paramValue=");
+            builder.append(theParameters.get(parameter).length);
+            builder.append(" bytes");
+            builder.append("\n");
         }
 
         log(builder.toString());
