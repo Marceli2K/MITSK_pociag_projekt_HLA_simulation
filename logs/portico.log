@@ -1,1 +1,3 @@
-ERROR [main] portico.lrc.jgroups: FAILURE createFederation: already exists, name=PociagFederation
+ERROR [main] portico.lrc.jgroups: FAILURE destoryFederation [ExampleFederation]: doesn't exist
+n
+ERROR [main] portico.lrc.jgroups: FAILURE destoryFederation [ExampleFederation]: doesn't exist

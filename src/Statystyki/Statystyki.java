@@ -10,9 +10,7 @@ import java.util.Random;
 public class Statystyki {
     private Random random;
     private static Statystyki instance = null;
-    protected int countOfCheckedPassenger = 0;
-    protected int countOfPassengerWithoutBilet = 0;
-    protected int countOfPassengerWITHBilet = 0;
+
 
     public Statystyki() {
         random = new Random();

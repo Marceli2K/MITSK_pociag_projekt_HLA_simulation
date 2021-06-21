@@ -69,6 +69,7 @@ public class KonduktorFederate {
     private ParameterHandle countOfCheckedPassenger;
     private ParameterHandle countOfPassengerWithoutBilet;
     private ParameterHandle countOfPassengerWITHBilet;
+    protected InteractionClassHandle stopSimulationHandle;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -258,10 +259,10 @@ public class KonduktorFederate {
 
 
     private void checkBiletInteraction() throws Exception {
-
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 //		publishAndSubscribe();
         ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
-        rtiamb.sendInteraction(checkBiletInteractionHandle, parameterHandleValueMap, generateTag());
+        rtiamb.sendInteraction(checkBiletInteractionHandle, parameterHandleValueMap, generateTag(), time);
 
     }
 
@@ -325,6 +326,13 @@ public class KonduktorFederate {
         this.countOfPassengerWITHBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
         // do the publication
         this.rtiamb.publishInteractionClass(this.sendInformationAboutPassengerForStatistics);
+
+        {
+            //        subscribe stopSimulation  interaction
+            String inames = "HLAinteractionRoot.PasazerManagment.StopSimulation";
+            stopSimulationHandle = rtiamb.getInteractionClassHandle(inames);
+            this.rtiamb.subscribeInteractionClass(this.stopSimulationHandle);
+        }
 
     }
 

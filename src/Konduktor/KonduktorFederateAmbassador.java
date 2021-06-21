@@ -271,6 +271,11 @@ public class KonduktorFederateAmbassador extends NullFederateAmbassador
 		{
 			builder.append( " (addNewKonduktorHandle)" );
 		}
+		if( interactionClass.equals(federate.stopSimulationHandle) )
+		{
+			builder.append( " (stopSimulationHandle)" );
+			isRunning = false;
+		}
 		
 		// print the tag
 		builder.append( ", tag=" + new String(tag) );

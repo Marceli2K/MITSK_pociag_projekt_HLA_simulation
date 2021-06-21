@@ -6,19 +6,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Wagon {
-    protected static List<Pasazer> pasazerList; //lista pasazerow stojących w wagonie
+    protected List<Pasazer> pasazerList; //lista pasazerow stojących w wagonie
     private static Wagon instance = null;
     private final List<Przedział> przedziałList;
     private final int iloscPrzedzial;
-    public static List<Pasazer> trainPassengerList; //lista wszytskich pasazerow w wagonie
-
+    public List<Pasazer> trainPassengerList; //lista wszytskich pasazerow w wagonie
+    int xVariable = 0;
 
     Wagon() {
-        pasazerList = new ArrayList<>();
+        this.pasazerList = new ArrayList<>();
         this.przedziałList = new ArrayList<>();
-        this.iloscPrzedzial = 4;
-        trainPassengerList = new ArrayList<Pasazer>();
-        for (int i = 0; i < 4; i++) {
+        this.iloscPrzedzial = 5;
+        this.trainPassengerList = new ArrayList<Pasazer>();
+        for (int i = 0; i < 5; i++) {
             this.przedziałList.add(new Przedział());
         }
     }
@@ -32,12 +32,24 @@ public class Wagon {
                 seated = przedzial.registerPasazerList(pasazer);
                 if (seated){
                     pasazer.setSeated();
+                    int tmp = 999999999;
+                    int index = 0;
+                    int siz = pasazerList.size();
+                    if (tmp > siz) {
+                        tmp = siz;
+                        index = przedziałList.indexOf(przedzial);
+                        pasazer.setPrzedzialNR(index+1);
+
+                    }
                     trainPassengerListRegister(pasazer);
+
+
                 }
             }
         }
         return seated;
     }
+
 
     public boolean registerPasazerWagon(Pasazer pasazer) {
         trainPassengerListRegister(pasazer);
@@ -64,7 +76,7 @@ public class Wagon {
 
 
 
-    protected static List<Pasazer> getPasazerowieWagonList() {
+    protected List<Pasazer> getPasazerowieWagonList() {
         return pasazerList;
     }
 
@@ -81,5 +93,7 @@ public class Wagon {
         return trainPassengerList;
     }
 
-
+    public int getListPassengerInWagonSize() {
+        return trainPassengerList.size();
+    }
 }

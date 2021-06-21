@@ -17,13 +17,12 @@ package Statystyki;
 import GUI.DisplayGUI;
 import hla.rti1516e.*;
 import hla.rti1516e.encoding.EncoderFactory;
-import hla.rti1516e.encoding.HLAinteger32BE;
+import hla.rti1516e.encoding.HLAfloat64BE;
 import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
 
-import javax.swing.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -38,7 +37,7 @@ import static GUI.DisplayGUI.setStatistics;
 
  * TODO LIST
  * przespisac funkcje gui ze statystyki do gui federat ale w tym celu:
- dołożyc przesyłanie interakcji do gui, odnosnie statystyk w pociagu
+ dołożyc odbieranie interakcji do gui, odnosnie statystyk w pociagu
  zrobic rysowanie nowych kropek w pociagach gdy pojawia sie tam pasazer
  *
  *
@@ -65,11 +64,14 @@ public class StatystykiFederate {
     protected ParameterHandle countOfPassengerWITHBiletFromALLHandle;
     protected ParameterHandle countOfPassengerWITHOUTBiletFromALLHandle;
     protected ParameterHandle CountOfSeatedPassengerInTrainHandle;
+    protected InteractionClassHandle sendInformationAboutPassengerForGUI;
+    protected ParameterHandle sendProbabilityWithoutBilet;
+    protected ParameterHandle sendProbabilitySeated;
 
     private int allPassenger = 0;
     private double probabilityWithoutBilet = 0;
-    private double probabilitySeated = 0;
-    DisplayGUI gui = new DisplayGUI();
+    private double probabilitySeated;
+    protected InteractionClassHandle stopSimulationHandle;
 
 
     // caches of handle types - set once we join a federation
@@ -168,7 +170,7 @@ public class StatystykiFederate {
         // but we don't care about that, as long as someone registered it
         rtiamb.registerFederationSynchronizationPoint(READY_TO_RUN, null);
         // wait until the point is announced
-        while (fedamb.isAnnounced == false) {
+        while (!fedamb.isAnnounced) {
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
@@ -185,7 +187,7 @@ public class StatystykiFederate {
         // until the federation has synchronized on
         rtiamb.synchronizationPointAchieved(READY_TO_RUN);
         log("Achieved sync point: " + READY_TO_RUN + ", waiting for federation...");
-        while (fedamb.isReadyToRun == false) {
+        while (!fedamb.isReadyToRun) {
             rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
 
@@ -212,11 +214,8 @@ public class StatystykiFederate {
         // send an interaction.
 
         while (fedamb.isRunning) {
-
-
             calcStat();
-            guiMethod(fedamb.federateTime);
-//            advanceTime(fedamb.federateLookahead);
+            sendStatToGUI();
             advanceTime(2.0);
             log("Time Advanced to " + fedamb.federateTime);
 
@@ -244,17 +243,37 @@ public class StatystykiFederate {
         }
     }
 
+    //    PUBLISH STATISTICS TO GUI
+    private void sendStatToGUI() throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress, InvalidLogicalTime {
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(5);
+
+        ParameterHandle CountOfpProbabilitySeatedParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForGUI, "probabilitySeated");
+        HLAfloat64BE CountOfpProbabilitySeated = encoderFactory.createHLAfloat64BE(probabilitySeated);
+
+        ParameterHandle CountOfProbabilityWithoutBiletParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForGUI, "probabilityWithoutBilet");
+        HLAfloat64BE CountOfProbabilityWithoutBilet = encoderFactory.createHLAfloat64BE(probabilityWithoutBilet);
+
+        parameterHandleValueMap.put(CountOfpProbabilitySeatedParameter, CountOfpProbabilitySeated.toByteArray());
+        parameterHandleValueMap.put(CountOfProbabilityWithoutBiletParameter, CountOfProbabilityWithoutBilet.toByteArray());
+
+
+        rtiamb.sendInteraction(this.sendInformationAboutPassengerForGUI, parameterHandleValueMap, generateTag(), time);
+
+    }
+
+    //    CALCULATE STAT
     private void calcStat() {
         allPassenger = fedamb.countOfPassengerWITHOUTBiletFromAll + fedamb.countOfPassengerWITHBiletFromAll;
-        System.out.println("no bilet checked " + fedamb.countOfPassengerWithoutBilet);
+//        System.out.println("no bilet checked " + fedamb.countOfPassengerWithoutBilet);
         if (allPassenger > 0) {
             probabilityWithoutBilet = (double) fedamb.countOfPassengerWithoutBilet / (double) allPassenger;
-            System.out.println("############prawd przejechania bez biletu " + probabilityWithoutBilet + " ########");
+//            System.out.println("############prawd przejechania bez biletu " + probabilityWithoutBilet + " ########");
             probabilitySeated = (double) fedamb.CountOfSeatedPassengerInTrain / (double) allPassenger;
             if (probabilitySeated > 1) {
                 this.probabilitySeated = 1.0;
             }
-            System.out.println("############prawd zajecia miejsca " + probabilitySeated + " ########");
+//            System.out.println("############prawd zajecia miejsca " + probabilitySeated + " ########");
         }
 
     }
@@ -263,13 +282,6 @@ public class StatystykiFederate {
     ////////////////////////////// Helper Methods //////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
 
-    protected void guiMethod(double federateTime) {
-
-        Thread watekPierwszy = new Thread(gui);
-
-        watekPierwszy.start();
-        setStatistics(probabilityWithoutBilet, probabilitySeated, federateTime, gui );
-    }
 
     /**
      * This method will attempt to enable the various time related properties for
@@ -314,21 +326,36 @@ public class StatystykiFederate {
     private void publishAndSubscribe() throws RTIexception {
         System.out.println("wait for publish");
 
+        {
+            //        subscribe changeNumberAboutPassenger
 
-        //        subscribe changeNumberAboutPassenger
+            InformationAboutPassengerForStatisticsaHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics");
+            //get count parameter for PasazerManagment Interaction
+            countOfCheckedPassengerHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfCheckedPassenger");
+            countOfPassengerWithoutBiletHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWithoutBilet");
+            countOfPassengerWITHBiletHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
+            countOfPassengerWITHBiletFromALLHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBiletFromAllPassenger");
+            countOfPassengerWITHOUTBiletFromALLHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHOUTBiletFromAllPassenger");
+            CountOfSeatedPassengerInTrainHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "CountOfSeatedPassengerInTrain");
+            rtiamb.subscribeInteractionClass(InformationAboutPassengerForStatisticsaHandle);
+        }
 
-        InformationAboutPassengerForStatisticsaHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics");
-        //get count parameter for PasazerManagment Interaction
-        countOfCheckedPassengerHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfCheckedPassenger");
-        countOfPassengerWithoutBiletHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWithoutBilet");
-        countOfPassengerWITHBiletHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
-        countOfPassengerWITHBiletFromALLHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBiletFromAllPassenger");
-        countOfPassengerWITHOUTBiletFromALLHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHOUTBiletFromAllPassenger");
-        CountOfSeatedPassengerInTrainHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "CountOfSeatedPassengerInTrain");
+        {
 
 
-        rtiamb.subscribeInteractionClass(InformationAboutPassengerForStatisticsaHandle);
-
+            ////	publish sendStatToGUI interaction
+            this.sendInformationAboutPassengerForGUI = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForGUI");
+            this.sendProbabilityWithoutBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForGUI"), "probabilityWithoutBilet");
+            this.sendProbabilitySeated = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForGUI"), "probabilitySeated");
+            // do the publication
+            this.rtiamb.publishInteractionClass(this.sendInformationAboutPassengerForGUI);
+        }
+        {
+            //        subscribe stopSimulation  interaction
+            String inames = "HLAinteractionRoot.PasazerManagment.StopSimulation";
+            stopSimulationHandle = rtiamb.getInteractionClassHandle(inames);
+            this.rtiamb.subscribeInteractionClass(this.stopSimulationHandle);
+        }
 
     }
 
@@ -346,7 +373,7 @@ public class StatystykiFederate {
         // LRC to start delivering callbacks to the federate
 
         while (fedamb.isAdvancing) {
-            boolean xd = rtiamb.evokeMultipleCallbacks(0.1, 0.2);
+            rtiamb.evokeMultipleCallbacks(0.1, 0.2);
         }
     }
 

@@ -4,16 +4,19 @@ import Konduktor.Konduktor;
 import Pasazer.Pasazer;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 
 public class Pociag {
-
-    private static List<Wagon> wagonList; //lista wagonow w pociagu
+    int tmp = 999999999;
+    private List<Wagon> wagonList; //lista wagonow w pociagu
     protected static List<Konduktor> konduktorList = new ArrayList<>();
     protected int passengerWithBilet = 0;
     protected int passengerWithoutBilet = 0;
-
+    int index = 0;
+    double smallest;
     Pociag(int iloscWagon) {
         wagonList = new ArrayList<>();
         for (int i = 0; i < iloscWagon; i++) {
@@ -37,7 +40,7 @@ public class Pociag {
     }
 
 
-    public boolean registerPasazer(Pasazer pasazer) {
+    public boolean registerPassenger(Pasazer pasazer) {
         pasazer.setPasazerBilet(pasazer);
         if (pasazer.getPasazerBilet()) {
             passengerWithBilet = passengerWithBilet + 1;
@@ -45,21 +48,33 @@ public class Pociag {
             passengerWithoutBilet = passengerWithoutBilet + 1;
         }
         boolean seated = false;
-        int tmp = 999999999;
-        int index = 0;
-        for (Wagon wagon : wagonList) {
-            int siz = Wagon.pasazerList.size();
-            if (tmp > siz) {
-                tmp = siz;
-                index = wagonList.indexOf(wagon);
-            }
-        }
-//      DODAWANIE PASAZEROW DO MIEJSC SIEDZACYCH W PRZEDZIALACH
-        if (!seated) {
-            seated = wagonList.get(index).registerPasazer(pasazer);
 
+
+        int w1, w2, w3, w4;
+        w1 = wagonList.get(0).getPasazerowieWagonListSize() + wagonList.get(0).getWagonPassengerSeated();
+        w2 = wagonList.get(1).getPasazerowieWagonListSize() + wagonList.get(1).getWagonPassengerSeated();
+        w3 = wagonList.get(2).getPasazerowieWagonListSize() + wagonList.get(2).getWagonPassengerSeated();
+        w4 = wagonList.get(3).getPasazerowieWagonListSize() + wagonList.get(3).getWagonPassengerSeated();
+
+        this.smallest = w1;
+        this.index = 0;
+        if (this.smallest >= w2) {
+            this.smallest = w2;
+            this.index = 1;
         }
 
+        if (this.smallest >= w3) {
+            this.smallest = w3;
+            this.index = 2;
+        }
+
+        if (this.smallest >= w4) {
+            this.smallest = w4;
+            this.index = 3;
+        }
+
+        pasazer.setNR_WagonNR(this.index+1);
+        seated = wagonList.get(this.index).registerPasazer(pasazer);
 //      dodawanie pasazerow do miejsc stojacych
         if (!seated) {
             int x = 0;//get random inf form 0 to wagonList.size()
@@ -69,7 +84,7 @@ public class Pociag {
     }
 
 
-    public static List<Wagon> getWagonList() {
+    public List<Wagon> getWagonList() {
         return wagonList;
     }
 

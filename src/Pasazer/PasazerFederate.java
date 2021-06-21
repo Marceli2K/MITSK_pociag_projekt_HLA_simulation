@@ -41,8 +41,6 @@ public class PasazerFederate {
      */
     public static final String READY_TO_RUN = "ReadyToRun";
     private static int globalID = 0;
-//	public InteractionClassHandle addNewPasazerHandle;
-//	public ParameterHandle countNewPasazerHandle;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -63,12 +61,14 @@ public class PasazerFederate {
     protected int standPassengerSize = 0;
     protected int storageMax = 0;
     protected int storageAvailable = 0;
+
     protected InteractionClassHandle sendStandPassengerSize;
     protected ParameterHandle countNewPasazerHandle;
     protected ParameterHandle countStandPassengerSize;
     protected InteractionClassHandle sendPassengerObjectToTrain;
     protected ParameterHandle passengerObjecttoTrain;
     protected static List<Pasazer> listTryToSit = new ArrayList<>();
+    protected InteractionClassHandle stopSimulationHandle;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -206,9 +206,9 @@ public class PasazerFederate {
 
 //        Pasazer pasazer = new Pasazer(getGlobalID());
         while (fedamb.isRunning) {
-
+            HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
             ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
-            rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag());
+            rtiamb.sendInteraction(SzukajMiejscaHandle, parameterHandleValueMap, generateTag(), time);
             publishStandPassengerSize();
             advanceTime(fedamb.federateLookahead);
             log("Time Advanced to " + fedamb.federateTime);
@@ -250,25 +250,28 @@ public class PasazerFederate {
         }
     }
 
-    protected void publishStandPassengerSize() throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress {
+    protected void publishStandPassengerSize() throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress, InvalidLogicalTime {
 //        standPassengerSize = fedamb.getStandPassengerSize();
         standPassengerSize = listTryToSit.size();
         if (standPassengerSize > tmpStandPassengerSize) {
+            HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
             ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
             ParameterHandle standPassengerSizeHandle = rtiamb.getParameterHandle(sendStandPassengerSize, "countStandPassengerSize");
             HLAinteger32BE sizePassenger = encoderFactory.createHLAinteger32BE(standPassengerSize);
             parameterHandleValueMap.put(standPassengerSizeHandle, sizePassenger.toByteArray());
-            rtiamb.sendInteraction(this.sendStandPassengerSize, parameterHandleValueMap, generateTag());
+            rtiamb.sendInteraction(this.sendStandPassengerSize, parameterHandleValueMap, generateTag(), time);
         }
         tmpStandPassengerSize = standPassengerSize;
     }
 
-    protected void publicPassenger(Pasazer pasazer) throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress {
+//PUBLISH PASSENGER OBJECT
+    protected void publicPassenger(Pasazer pasazer) throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress, InvalidLogicalTime {
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
         ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle passengerObjecteHandle = rtiamb.getParameterHandle(sendPassengerObjectToTrain, "passengerObject");
 //        HLA1516eFixedRecord sizePassenger = (HLA1516eFixedRecord) encoderFactory.createHLAfixedRecord(pasazer);
         parameterHandleValueMap.put(passengerObjecteHandle, pasazer.toByteArray());
-        rtiamb.sendInteraction(this.sendPassengerObjectToTrain, parameterHandleValueMap, generateTag());
+        rtiamb.sendInteraction(this.sendPassengerObjectToTrain, parameterHandleValueMap, generateTag(), time);
 
     }
 
@@ -329,11 +332,7 @@ public class PasazerFederate {
      * federates produce it.
      */
     private void publishAndSubscribe() throws RTIexception {
-//        System.out.println("publish and subscibe");
-//        // subscribe for ProductsStorage
-//        this.storageHandle = rtiamb.getObjectClassHandle("HLAobjectRoot.Pociag");
-//        this.storageMaxHandle = rtiamb.getAttributeHandle(storageHandle, "max");
-//        this.storageAvailableHandle = rtiamb.getAttributeHandle(storageHandle, "available");
+       System.out.println("publish and subscibe");
 
 
         // subscribe NewPasazer Interaction
@@ -350,6 +349,12 @@ public class PasazerFederate {
 //		attributes.add( storageAvailableHandle );
 //		rtiamb.subscribeObjectClassAttributes(storageHandle, attributes);
 
+        {
+            //        subscribe stopSimulation  interaction
+            String iname = "HLAinteractionRoot.PasazerManagment.StopSimulation";
+            stopSimulationHandle = rtiamb.getInteractionClassHandle(iname);
+            this.rtiamb.subscribeInteractionClass(this.stopSimulationHandle);
+        }
 
 ////		publish GetProducts interaction
         String iname = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
@@ -367,6 +372,7 @@ public class PasazerFederate {
 
         ////	publish passengerObject interaction
         this.sendPassengerObjectToTrain = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.SendPassengerObjectToTrainAndStatistics");
+        this.passengerObjecttoTrain = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.SendPassengerObjectToTrainAndStatistics"), "passengerObject");
         this.passengerObjecttoTrain = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.SendPassengerObjectToTrainAndStatistics"), "passengerObject");
 
         // do the publication

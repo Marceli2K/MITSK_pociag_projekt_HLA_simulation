@@ -17,6 +17,7 @@ package Pociag;
 import Konduktor.Konduktor;
 import Pasazer.Pasazer;
 import hla.rti1516e.*;
+import hla.rti1516e.encoding.DecoderException;
 import hla.rti1516e.encoding.EncoderFactory;
 import hla.rti1516e.encoding.HLAinteger32BE;
 import hla.rti1516e.exceptions.*;
@@ -29,6 +30,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PociagFederate {
@@ -45,6 +47,7 @@ public class PociagFederate {
      */
     public static final String READY_TO_RUN = "ReadyToRun";
     public InteractionClassHandle SzukajMiejscaHandle;
+    public int yVariable;
 
     //----------------------------------------------------------
     //                   INSTANCE VARIABLES
@@ -54,6 +57,7 @@ public class PociagFederate {
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
     public Pociag pociag;
+
     // caches of handle types - set once we join a federation
     protected ObjectClassHandle storageHandle;
     protected AttributeHandle storageMaxHandle;
@@ -61,8 +65,8 @@ public class PociagFederate {
     protected InteractionClassHandle AddPasazerHandle;
     protected InteractionClassHandle getProductsHandle;
     protected ParameterHandle countHandle;
-    protected InteractionClassHandle newPasazerHandle;
-    protected ParameterHandle newClientInteractionClassClientIdParameterHandle;
+    //    protected InteractionClassHandle newPasazerHandle;
+//    protected ParameterHandle newClientInteractionClassClientIdParameterHandle;
     protected InteractionClassHandle checkBiletInteractionHandle;
     protected InteractionClassHandle subscribePassengerObjectHandle;
     protected ParameterHandle passengerObjectHandle;
@@ -74,8 +78,16 @@ public class PociagFederate {
     private ParameterHandle countOfPassengerWITHBiletfromALL;
     private ParameterHandle countOfPassengerWITHOUTTBiletfromALL;
     private ParameterHandle CountOfSeatedPassengerInTrain;
-//    private InteractionClassHandle SzukajMiejscaHandle;
-
+    private InteractionClassHandle sendxVariableForDrawGuitHandle;
+    private ParameterHandle xVariableForDrawGuitHandle;
+    //    private InteractionClassHandle SzukajMiejscaHandle;
+    protected List<Pasazer> listOfRegisteredPassenger = new ArrayList<>();
+    private int tmp = 0;
+    protected int xVariable = 0;
+    protected ParameterHandle yVariableForDrawGuitHandle;
+    protected List<Integer> varx = new ArrayList<>();
+    protected List<Integer> vary = new ArrayList<>();
+    protected InteractionClassHandle stopSimulationHandle;
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -220,18 +232,17 @@ public class PociagFederate {
         // send an interaction.
         pociag = new Pociag(4);
         int x = 0;
-
+        int tmmm = 0;
         while (fedamb.isRunning) {
             // update ProductsStorage parameters max and available to current values
             AttributeHandleValueMap attributes = rtiamb.getAttributeHandleValueMapFactory().create(2);
-
-//            HLAinteger32BE maxValue = encoderFactory.createHLAinteger32BE(Pociag.getInstance().getMax());
-//            attributes.put(storageMaxHandle, maxValue.toByteArray());
 
             HLAinteger32BE availableValue = encoderFactory.createHLAinteger32BE(Pociag.getInstance().getAvailable());
             attributes.put(storageAvailableHandle, availableValue.toByteArray());
 
             rtiamb.updateAttributeValues(objectHandle, attributes, generateTag());
+
+//            DANE DO STATYSTYK
             int getCountOfCheckedPassengerALL = 0;
             int getCountOfPassengerWithoutBiletALL = 0;
             int getCountOfPassengerWITHBiletALL = 0;
@@ -240,7 +251,7 @@ public class PociagFederate {
                 int getCountOfCheckedPassenger = konduktor.getCountOfCheckedPassenger();
                 int getCountOfPassengerWithoutBilet = konduktor.getCountOfPassengerWithoutBilet();
                 int getCountOfPassengerWITHBilet = konduktor.getCountOfPassengerWITHBilet();
-                System.out.println(getCountOfCheckedPassenger);
+
                 getCountOfCheckedPassengerALL = getCountOfCheckedPassengerALL + getCountOfCheckedPassenger;
                 getCountOfPassengerWithoutBiletALL = getCountOfPassengerWithoutBiletALL + getCountOfPassengerWithoutBilet;
                 getCountOfPassengerWITHBiletALL = getCountOfPassengerWITHBiletALL + getCountOfPassengerWITHBilet;
@@ -248,6 +259,17 @@ public class PociagFederate {
                     changeNumberAboutPassenger(getCountOfCheckedPassengerALL, getCountOfPassengerWithoutBiletALL, getCountOfPassengerWITHBiletALL);
                     x = getCountOfCheckedPassengerALL;
                 }
+            }
+
+//            PUBLIKOANIE KOORDYNATOÓW NOWEGO PASAZERA
+            if (tmmm <= fedamb.numberOfxVariable) {
+                tmmm = tmmm + 1;
+                try {
+                    publishXVariableForDrawGuiParameter(varx.get(tmmm), vary.get(tmmm));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
             }
 
 
@@ -285,7 +307,7 @@ public class PociagFederate {
 
     //    wysylanie zmian odosnie liczb pasazerow, tj obecnych i z biletem i bez biletu
     private void changeNumberAboutPassenger(int getCountOfCheckedPassengerALL, int getCountOfPassengerWithoutBiletALL, int getCountOfPassengerWITHBiletALL) throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress, InvalidLogicalTime {
-        
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
 
         ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(5);
 
@@ -306,8 +328,7 @@ public class PociagFederate {
 
         ParameterHandle CountOfSeatedPassengerParameter = rtiamb.getParameterHandle(sendInformationAboutPassengerForStatistics, "CountOfSeatedPassengerInTrain");
         HLAinteger32BE CountOfSeatedPassenger = encoderFactory.createHLAinteger32BE(pociag.getAllPassengerSeated());
-        
-        
+
 
         parameterHandleValueMap.put(countOfCheckedPassengerParameter, CountOfCheckedPassenger.toByteArray());
         parameterHandleValueMap.put(CountOfPassengerWithoutBiletParameter, CountOfPassengerWithoutBiletPassenger.toByteArray());
@@ -315,8 +336,23 @@ public class PociagFederate {
         parameterHandleValueMap.put(CountOfPassengerWITHBiletFromAllParameter, CountOfPassengerWITHBiletFromALL.toByteArray());
         parameterHandleValueMap.put(CountOfPassengerWITHOUTBiletFromAllParameter, CountOfPassengerWITHOUTBiletFromALL.toByteArray());
         parameterHandleValueMap.put(CountOfSeatedPassengerParameter, CountOfSeatedPassenger.toByteArray());
-        
-        rtiamb.sendInteraction(this.sendInformationAboutPassengerForStatistics, parameterHandleValueMap, generateTag());
+
+        rtiamb.sendInteraction(this.sendInformationAboutPassengerForStatistics, parameterHandleValueMap, generateTag(), time);
+
+    }
+
+//    PUBLIKACJA DANYCH NA TEMAT KOORDYNAÓW PASAŻERA
+    protected void publishXVariableForDrawGuiParameter(int x_parameter, int y_parameter) throws FederateNotExecutionMember, NotConnected, InvalidInteractionClassHandle, NameNotFound, RTIinternalError, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, SaveInProgress, InvalidLogicalTime {
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+
+        ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(2);
+        ParameterHandle passengerObjecteHandle = rtiamb.getParameterHandle(sendxVariableForDrawGuitHandle, "xVariableForDrawGuiParameter");
+        ParameterHandle passengerObjecteHandle2 = rtiamb.getParameterHandle(sendxVariableForDrawGuitHandle, "yVariableForDrawGuiParameter");
+        HLAinteger32BE count = encoderFactory.createHLAinteger32BE(x_parameter);
+        parameterHandleValueMap.put(passengerObjecteHandle, count.toByteArray());
+        HLAinteger32BE count2 = encoderFactory.createHLAinteger32BE(y_parameter);
+        parameterHandleValueMap.put(passengerObjecteHandle2, count2.toByteArray());
+        rtiamb.sendInteraction(this.sendxVariableForDrawGuitHandle, parameterHandleValueMap, generateTag(), time);
 
     }
 
@@ -373,39 +409,60 @@ public class PociagFederate {
 //
         rtiamb.publishObjectClassAttributes(storageHandle, attributes);
 
+        {
 //        subscribe szukaj miejsca
-        String iname = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
-        SzukajMiejscaHandle = rtiamb.getInteractionClassHandle(iname);
-        //get count parameter for PasazerManagment Interaction
-        countHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SzukajMiejsca"), "count");
-        rtiamb.subscribeInteractionClass(SzukajMiejscaHandle);
+            String iname = "HLAinteractionRoot.PasazerManagment.SzukajMiejsca";
+            SzukajMiejscaHandle = rtiamb.getInteractionClassHandle(iname);
+            //get count parameter for PasazerManagment Interaction
+            countHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SzukajMiejsca"), "count");
+            rtiamb.subscribeInteractionClass(SzukajMiejscaHandle);
+        }
 
+        {
 //        subscribe cehckbilet interaction
-        String inames = "HLAinteractionRoot.PasazerManagment.CheckBilet";
-        checkBiletInteractionHandle = rtiamb.getInteractionClassHandle(inames);
-        this.rtiamb.subscribeInteractionClass(this.checkBiletInteractionHandle);
+            String inames = "HLAinteractionRoot.PasazerManagment.CheckBilet";
+            checkBiletInteractionHandle = rtiamb.getInteractionClassHandle(inames);
+            this.rtiamb.subscribeInteractionClass(this.checkBiletInteractionHandle);
+        }
+        {
+        //        subscribe stopSimulation  interaction
+        String inames = "HLAinteractionRoot.PasazerManagment.StopSimulation";
+        stopSimulationHandle = rtiamb.getInteractionClassHandle(inames);
+        this.rtiamb.subscribeInteractionClass(this.stopSimulationHandle);
+    }
 
-
+        {
 //      subscribe subscribePassengerObjectHandle interaction
-        subscribePassengerObjectHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.SendPassengerObjectToTrainAndStatistics");
-        //get object parameter for subscribePassengerObjectHandle Interaction
-        passengerObjectHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SendPassengerObjectToTrainAndStatistics"), "passengerObject");
-        rtiamb.subscribeInteractionClass(subscribePassengerObjectHandle);
+            subscribePassengerObjectHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.SendPassengerObjectToTrainAndStatistics");
+            //get object parameter for subscribePassengerObjectHandle Interaction
+            passengerObjectHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.SendPassengerObjectToTrainAndStatistics"), "passengerObject");
+            rtiamb.subscribeInteractionClass(subscribePassengerObjectHandle);
 
-        
-        ////	publish sendInformationAboutPassengerForStatistics interaction
-        this.sendInformationAboutPassengerForStatistics = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics");
-        this.countOfCheckedPassenger = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfCheckedPassenger");
-        this.countOfPassengerWithoutBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWithoutBilet");
-        this.countOfPassengerWITHBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
-        this.countOfPassengerWITHBiletfromALL = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBiletFromAllPassenger");
-        this.countOfPassengerWITHOUTTBiletfromALL = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHOUTBiletFromAllPassenger");
-        this.CountOfSeatedPassengerInTrain = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "CountOfSeatedPassengerInTrain");
+        }
 
-        // do the publication
-        this.rtiamb.publishInteractionClass(this.sendInformationAboutPassengerForStatistics);
+        {
+            ////	publish sendInformationAboutPassengerForStatistics interaction
+            this.sendInformationAboutPassengerForStatistics = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics");
+            this.countOfCheckedPassenger = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfCheckedPassenger");
+            this.countOfPassengerWithoutBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWithoutBilet");
+            this.countOfPassengerWITHBilet = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBilet");
+            this.countOfPassengerWITHBiletfromALL = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHBiletFromAllPassenger");
+            this.countOfPassengerWITHOUTTBiletfromALL = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "countOfPassengerWITHOUTBiletFromAllPassenger");
+            this.CountOfSeatedPassengerInTrain = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForStatistics"), "CountOfSeatedPassengerInTrain");
 
+            // do the publication
+            this.rtiamb.publishInteractionClass(this.sendInformationAboutPassengerForStatistics);
+        }
 
+        {
+            ////	publish xVariableForDrawGuitHandle interaction
+            this.sendxVariableForDrawGuitHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.xVariableForDrawGui");
+            this.xVariableForDrawGuitHandle = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.xVariableForDrawGui"), "xVariableForDrawGuiParameter");
+            this.yVariableForDrawGuitHandle = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.xVariableForDrawGui"), "yVariableForDrawGuiParameter");
+
+            // do the publication
+            this.rtiamb.publishInteractionClass(this.sendxVariableForDrawGuitHandle);
+        }
     }
 
     /**

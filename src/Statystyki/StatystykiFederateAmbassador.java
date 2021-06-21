@@ -182,41 +182,6 @@ public class StatystykiFederateAmbassador extends NullFederateAmbassador {
             // print the attibute handle
             builder.append("\tattributeHandle=");
 
-            // if we're dealing with Flavor, decode into the appropriate enum value
-//			if( attributeHandle.equals(federate.storageAvailableHandle) )
-//			{
-//				builder.append( attributeHandle );
-//				builder.append( " (Available)    " );
-//				builder.append( ", attributeValue=" );
-//				HLAinteger32BE available = new HLA1516eInteger32BE();
-//				try {
-//					available.decode(theAttributes.get(attributeHandle));
-//				} catch (DecoderException e) {
-//					e.printStackTrace();
-//				}
-//				builder.append( available.getValue() );
-//				federate.liczbaDostepnychMiejscSiedzacych = available.getValue();
-//			}
-//			else if( attributeHandle.equals(federate.storageMaxHandle) )
-//			{
-//				builder.append( attributeHandle );
-//				builder.append( " (Max)" );
-//				builder.append( ", attributeValue=" );
-//				HLAinteger32BE max = new HLA1516eInteger32BE();
-//				try {
-//					max.decode(theAttributes.get(attributeHandle));
-//				} catch (DecoderException e) {
-//					e.printStackTrace();
-//				}
-//				builder.append( max.getValue() );
-//				federate.maksymalnaLiczbaMiejscSiedzacych = max.getValue();
-//			}
-//			else
-//			{
-//				builder.append( attributeHandle );
-//				builder.append( " (Unknown)   " );
-//			}
-
             builder.append("\n");
         }
 
@@ -260,6 +225,11 @@ public class StatystykiFederateAmbassador extends NullFederateAmbassador {
         builder.append(" handle=" + interactionClass);
         if (interactionClass.equals(federate.InformationAboutPassengerForStatisticsaHandle)) {
             builder.append(" (addNewKonduktorHandle)");
+        }
+        if( interactionClass.equals(federate.stopSimulationHandle) )
+        {
+            builder.append( " (stopSimulationHandle)" );
+            isRunning = false;
         }
 
         // print the tag
@@ -328,7 +298,7 @@ public class StatystykiFederateAmbassador extends NullFederateAmbassador {
                 }
                 builder.append(deco.getValue());
                 countOfPassengerWITHOUTBiletFromAll = deco.getValue();
-                builder.append("\nLiczba wszystkich pasazerow w pociagu z biletem :  " ).append(countOfPassengerWITHOUTBiletFromAll);
+                builder.append("\nLiczba wszystkich pasazerow w pociagu bez biletu :  " ).append(countOfPassengerWITHOUTBiletFromAll);
             }
             if (parameter.equals(federate.CountOfSeatedPassengerInTrainHandle)) {
                 HLAinteger32BE deco = new HLA1516eInteger32BE();
@@ -339,7 +309,7 @@ public class StatystykiFederateAmbassador extends NullFederateAmbassador {
                 }
                 builder.append(deco.getValue());
                 CountOfSeatedPassengerInTrain = deco.getValue();
-                builder.append("\nLiczba wszystkich pasazerow w pociagu z biletem :  " ).append(CountOfSeatedPassengerInTrain);
+                builder.append("\nLiczba wszystkich  siedzacych pasazerow w pociagu  :  " ).append(CountOfSeatedPassengerInTrain);
             }
             // print the parameter handle
             builder.append("\tparamHandle=");

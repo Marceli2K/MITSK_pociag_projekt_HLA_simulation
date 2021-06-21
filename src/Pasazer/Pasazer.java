@@ -1,6 +1,5 @@
 package Pasazer;
 
-import Konduktor.Konduktor;
 import org.portico.impl.hla1516e.types.encoding.*;
 import hla.rti1516e.encoding.DecoderException;
 import org.portico.impl.hla1516e.types.encoding.HLA1516eInteger64BE;
@@ -18,6 +17,8 @@ public class Pasazer extends HLA1516eFixedRecord {
     protected long pasazerID;
     private boolean tryToSit;
     protected boolean seated;
+    protected long wagonNR =0;
+    protected long  przedzialNR = -1;
     private static Pasazer instance = null;
     //    prawdopodobienstwo posiadania biletu przez nowego pasazera
 
@@ -29,7 +30,10 @@ public class Pasazer extends HLA1516eFixedRecord {
         this.bilet = false;
         this.pasazerID = pasazerID;
         tryToSit = false;
+
         add(new HLA1516eInteger64BE(this.pasazerID));
+        add(new HLA1516eInteger64BE(this.wagonNR));
+        add(new HLA1516eInteger64BE(this.przedzialNR));
         add(new HLA1516eBoolean(this.bilet));
         add(new HLA1516eBoolean(this.checked));
         add(new HLA1516eBoolean(this.tryToSit));
@@ -40,20 +44,22 @@ public class Pasazer extends HLA1516eFixedRecord {
     public void decode(byte[] bytes) throws DecoderException {
         super.decode(bytes);
         this.pasazerID = ((HLA1516eInteger64BE) get(0)).getValue();
-        this.checked = ((HLA1516eBoolean) get(1)).getValue();
-        this.bilet = ((HLA1516eBoolean) get(2)).getValue();
-        this.tryToSit = ((HLA1516eBoolean) get(3)).getValue();
-        this.seated = ((HLA1516eBoolean) get(4)).getValue();
+        this.wagonNR = ((HLA1516eInteger64BE) get(1)).getValue();
+        this.przedzialNR = ((HLA1516eInteger64BE) get(2)).getValue();
+        this.bilet = ((HLA1516eBoolean) get(3)).getValue();
+        this.checked = ((HLA1516eBoolean) get(4)).getValue();
+        this.tryToSit = ((HLA1516eBoolean) get(5)).getValue();
+        this.seated = ((HLA1516eBoolean) get(6)).getValue();
     }
 
     public static int randomBilet() {
         Random random = new Random();
         long p = random.nextLong();
         if (p < prawdPosiadaniaBiletu) {
-            System.out.println("11111111111111111111111111111111111111111111111");
+//            System.out.println("11111111111111111111111111111111111111111111111");
             return 1;
         } else {
-            System.out.println("00000000000000000000000000000000000000000000000000");
+//            System.out.println("00000000000000000000000000000000000000000000000000");
             return 0;
         }
     }
@@ -66,6 +72,26 @@ public class Pasazer extends HLA1516eFixedRecord {
         int x = randomBilet();
         pasazer.bilet = (x != 0);
     }
+    public void setPrzedzialNR(int przedzial){
+        this.przedzialNR = przedzial;
+//        System.out.println("nr przedzialu ustalono na :"+przedzialNR);
+
+    }
+    public void setNR_WagonNR(int wagon){
+        this.wagonNR = wagon;
+//        System.out.println("nr wagonu ustalono na :"+wagonNR);
+    }
+
+    public int getPrzedzialNR(){
+        return (int) this.przedzialNR;
+
+
+    }
+    public int getNR_WagonNR(){
+        return (int) this.wagonNR;
+
+    }
+
 
     public boolean getPasazerBilet() {
         return this.bilet;

@@ -14,7 +14,7 @@
             <objectClass>
                 <name>Pociag</name>
                 <sharing>PublishSubscribe</sharing>
-                <semantics>Magazyn dla produktow</semantics>
+                <semantics>Obiekt pociagu</semantics>
                 <attribute>
                     <name>available</name>
                     <dataType>HLAinteger32BE</dataType>
@@ -109,6 +109,22 @@
                     </parameter>
                 </interactionClass>
                 <interactionClass>
+                    <name>InformationAboutPassengerForGUI</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <parameter>
+                        <name>probabilitySeated</name>
+                        <dataType>HLAfloat64BE</dataType>
+                        <semantics>Prawdopodobieństwo zajęcia miejsca</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>probabilityWithoutBilet</name>
+                        <dataType>HLAfloat64BE</dataType>
+                        <semantics>Prawdopodobieństwo przejchania bez biletu</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
                     <name>NewKonduktor</name>
                     <sharing>PublishSubscribe</sharing>
                     <transportation>HLAreliable</transportation>
@@ -138,12 +154,35 @@
                     <semantics>Rozpoczęcie sprawdzania biletów</semantics>
                 </interactionClass>
                 <interactionClass>
+                    <name>StopSimulation</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <semantics>Koniec symulacji</semantics>
+                </interactionClass>
+                <interactionClass>
                     <name>StandPassengerSize</name>
                     <sharing>PublishSubscribe</sharing>
                     <transportation>HLAreliable</transportation>
                     <order>TimeStamp</order>
                     <parameter>
                         <name>countStandPassengerSize</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>number of standing passenger</semantics>
+                    </parameter>
+                </interactionClass>
+                <interactionClass>
+                    <name>xVariableForDrawGui</name>
+                    <sharing>PublishSubscribe</sharing>
+                    <transportation>HLAreliable</transportation>
+                    <order>TimeStamp</order>
+                    <parameter>
+                        <name>xVariableForDrawGuiParameter</name>
+                        <dataType>HLAinteger32BE</dataType>
+                        <semantics>number of standing passenger</semantics>
+                    </parameter>
+                    <parameter>
+                        <name>yVariableForDrawGuiParameter</name>
                         <dataType>HLAinteger32BE</dataType>
                         <semantics>number of standing passenger</semantics>
                     </parameter>
@@ -172,6 +211,16 @@
                 <name>Pasazer</name>
                 <encoding>HLAfixedRecord</encoding>
                 <semantics>Obiekt klienta</semantics>
+                <field>
+                    <name>PasazerID</name>
+                    <dataType>HLAinteger64BE</dataType>
+                    <semantics>Numer ID pasazera</semantics>
+                </field>
+                <field>
+                    <name>wagonNR</name>
+                    <dataType>HLAinteger64BE</dataType>
+                    <semantics>Numer wagonu w którym siedzi pasazer</semantics>
+                </field>
                 <field>
                     <name>PasazerID</name>
                     <dataType>HLAinteger64BE</dataType>

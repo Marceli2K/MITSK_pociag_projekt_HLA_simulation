@@ -21,6 +21,7 @@ import hla.rti1516e.exceptions.*;
 import hla.rti1516e.time.HLAfloat64Interval;
 import hla.rti1516e.time.HLAfloat64Time;
 import hla.rti1516e.time.HLAfloat64TimeFactory;
+import org.jgroups.TimeoutException;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -28,19 +29,9 @@ import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import static GUI.DisplayGUI.setStatistics;
 import static org.portico.lrc.PorticoConstants.sleep;
 
-
-/*
-
-
- * TO DO LIST
- * DOWIEDZIEC SIE CZEMU SIE PIERDOLI ADVANCE TIME
- * DOWIEDZIEC SIE CZEMU W PASAZERZE NIC NIE DZIALA
- * DOWIEDZIEC SIE CO DALEJ ROBIC ZEBY TO ZROBIC :<
- *
- *
- * */
 
 public class GUIFederate {
     /**
@@ -55,19 +46,36 @@ public class GUIFederate {
     private GUIFederateAmbassador fedamb;  // created when we connect
     private HLAfloat64TimeFactory timeFactory; // set when we join
     protected EncoderFactory encoderFactory;     // set when we join
+
     protected int liczbaPasazerow = 0;
+    protected int currentNumberOfPassenger; // AKTUALNA LICZBA PASAZEROW
+    protected int maxSeantingPlace = 0; // LICZBA MIEJSC SIEDZACYCH
+    protected int maxNumberOfPassenger = 339; // MAKSYMALNA LICZB PASAZEROW
+    protected int numberOfAvaibleSeatingPlace = 0; // LICZBA DOSTEPNYCH MEIJSC SIEDZACYCH
+    protected double probabilityWithoutBilet; // PRAWDOPODOIENSTWO PRZEJECHANIA BEZ BILETU
+    protected double probabilitySeated;  // PRAWDOPODOBIEŃSTWO ZAJECIA MIEJSCA SIEDACEGO
+
     // caches of handle types - set once we join a federation
-    protected ObjectClassHandle storageHandle;
     protected AttributeHandle storageMaxHandle;
     protected AttributeHandle storageAvailableHandle;
     protected InteractionClassHandle addNewPasazerHandle;
-    protected int aktualnaLiczbaPasazerow;
-    protected int maksymalnaLiczbaMiejscSiedzacych = 0;
-    protected int maksymalnaLiczbaPasazerow = 339;
-    protected int liczbaDostepnychMiejscSiedzacych = 0;
-    private ParameterHandle countNewPasazerHandle;
+    protected ParameterHandle countNewPasazerHandle;
     protected InteractionClassHandle standPassengerHandleHandle;
     protected ParameterHandle countStandPassengerSizeHandle;
+
+    protected InteractionClassHandle InformationAboutPassengerForGUIHandle;
+    protected ParameterHandle probabilitySeatedHandle;
+    protected ParameterHandle probabilityWithoutBiletHandle;
+    protected InteractionClassHandle subscribePassengerObjectHandle;
+    protected ParameterHandle xVariableForDrawGuiParameterHandle;
+    private InteractionClassHandle xVariableForDrawGuitHandle;
+    protected ParameterHandle yVariableForDrawGuiParameterHandle;
+
+
+    DisplayGUI displayGUI = new DisplayGUI();
+    private String federationName = "GUI";
+    protected InteractionClassHandle stopSimulationHandle;
+
     //----------------------------------------------------------
     //                      CONSTRUCTORS
     //----------------------------------------------------------
@@ -205,11 +213,13 @@ public class GUIFederate {
         // update the attribute values of the object we registered, and will
         // send an interaction.
         GUI gui = new GUI();
+        guiMethod(displayGUI);
         while (fedamb.isRunning) {
 
+            setStatMethod(fedamb.federateTime, displayGUI); // WYWOLANIE METODY ODPOWIEDZIALNEJ ZA USTANOWIENIE STATYSTYK
 //			PASAZEROWIE SIADAJA ZAWSZE DO POCIAGU ALE NIE ZAWSZE ZNAJDUJA MIEJSCE
-            System.out.println("aktualnaLiczbaPasazerow " + aktualnaLiczbaPasazerow);
-            if (maksymalnaLiczbaPasazerow >= aktualnaLiczbaPasazerow) {
+            System.out.println("aktualnaLiczbaPasazerow " + currentNumberOfPassenger);
+            if (maxNumberOfPassenger >= currentNumberOfPassenger) {
                 int liczbaWsiadajacychPasazerow = gui.wsiadanie();
                 adddNewPasazer(liczbaWsiadajacychPasazerow); // dodawanie nowych pasazerow do pociagu
                 log("Liczba wsiadajacyh pasazerow to  :  " + liczbaWsiadajacychPasazerow);
@@ -218,9 +228,11 @@ public class GUIFederate {
 //			advanceTime(fedamb.federateLookahead);
                 log("Time Advanced to " + fedamb.federateTime);
             } else {
-                log("Osiągnięto maksymalną liczbe pasazerów, obecnie jest :  " + aktualnaLiczbaPasazerow);
+                log("Osiągnięto maksymalną liczbe pasazerów, obecnie jest :  " + currentNumberOfPassenger);
                 sleep(111);
+                stopSimulation();
             }
+            System.out.println(fedamb.isRunning);
         }
 
 
@@ -245,6 +257,8 @@ public class GUIFederate {
         }
     }
 
+
+
     ////////////////////////////////////////////////////////////////////////////
     ////////////////////////////// Helper Methods //////////////////////////////
     ////////////////////////////////////////////////////////////////////////////
@@ -253,18 +267,39 @@ public class GUIFederate {
      * This method will attempt to enable the various time related properties for
      * the federate
      *
-     * @param liczbaWsiadajacychPasazerow
+     * @param countNewPassenger
      */
-    private void adddNewPasazer(int liczbaWsiadajacychPasazerow) throws Exception {
-
-        liczbaPasazerow = liczbaPasazerow + liczbaWsiadajacychPasazerow;
-//		publishAndSubscribe();
+    private void adddNewPasazer(int countNewPassenger) throws Exception {
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+fedamb.federateLookahead );
+        liczbaPasazerow = liczbaPasazerow + countNewPassenger;
         ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(1);
         ParameterHandle addNewPasazerCountHandle = rtiamb.getParameterHandle(addNewPasazerHandle, "countNewPasazer");
-        HLAinteger32BE count = encoderFactory.createHLAinteger32BE(liczbaWsiadajacychPasazerow);
+        HLAinteger32BE count = encoderFactory.createHLAinteger32BE(countNewPassenger);
         parameterHandleValueMap.put(addNewPasazerCountHandle, count.toByteArray());
-        rtiamb.sendInteraction(this.addNewPasazerHandle, parameterHandleValueMap, generateTag());
+        rtiamb.sendInteraction(this.addNewPasazerHandle, parameterHandleValueMap, generateTag(), time);
 
+    }
+    private void stopSimulation() throws FederateNotExecutionMember, InteractionParameterNotDefined, RestoreInProgress, InteractionClassNotDefined, InteractionClassNotPublished, NotConnected, InvalidLogicalTime, RTIinternalError, SaveInProgress, CallNotAllowedFromWithinCallback, InvalidResignAction, OwnershipAcquisitionPending, FederateOwnsAttributes {
+        HLAfloat64Time time = timeFactory.makeTime( fedamb.federateTime+ 2.0 );
+        ParameterHandleValueMap parameterHandleValueMap = rtiamb.getParameterHandleValueMapFactory().create(0);
+        rtiamb.sendInteraction(stopSimulationHandle, parameterHandleValueMap, generateTag(), time);
+        fedamb.isRunning = false;
+        System.out.println(fedamb.isRunning);
+    }
+
+    protected void guiMethod(DisplayGUI displayGUI) {
+        Thread watekPierwszy = new Thread(displayGUI);
+        watekPierwszy.start();
+
+
+    }
+
+    protected void setStatMethod(double federateTime, DisplayGUI displayGUI) {
+        setStatistics(probabilityWithoutBilet, probabilitySeated, federateTime, displayGUI);
+    }
+
+    protected void drawPassenger(DisplayGUI displayGUI, int x, int y) {
+        displayGUI.drawOval(x, y);
     }
 
     private void enableTimePolicy() throws Exception {
@@ -302,23 +337,54 @@ public class GUIFederate {
      */
     private void publishAndSubscribe() throws RTIexception {
         System.out.println("wait for publish");
-//        subscribe standPassengerHandleCount
-        String inames = "HLAinteractionRoot.PasazerManagment.StandPassengerSize";
-        standPassengerHandleHandle = rtiamb.getInteractionClassHandle(inames);
 
-        //get count parameter for PasazerManagment Interaction
-        countStandPassengerSizeHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.StandPassengerSize"), "countStandPassengerSize");
-        rtiamb.subscribeInteractionClass(standPassengerHandleHandle);
+        {
+//          subscribe standPassengerHandleCount
+            String inames = "HLAinteractionRoot.PasazerManagment.StandPassengerSize";
+            standPassengerHandleHandle = rtiamb.getInteractionClassHandle(inames);
 
+            //get count parameter for PasazerManagment Interaction
+            countStandPassengerSizeHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.StandPassengerSize"), "countStandPassengerSize");
+            rtiamb.subscribeInteractionClass(standPassengerHandleHandle);
+        }
 
-//       publish Count new pasazer
+        {
+//          subscribe CalcStat
+            String calcStatName = "HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForGUI";
+            InformationAboutPassengerForGUIHandle = rtiamb.getInteractionClassHandle(calcStatName);
 
-        this.addNewPasazerHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer");
-        this.countNewPasazerHandle = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer"), "countNewPasazer");
+//          get count parameter for PasazerManagment Interaction
+            probabilitySeatedHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForGUI"), "probabilitySeated");
+            probabilityWithoutBiletHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.InformationAboutPassengerForGUI"), "probabilityWithoutBilet");
+            rtiamb.subscribeInteractionClass(InformationAboutPassengerForGUIHandle);
+        }
 
-        // do the publication
-        this.rtiamb.publishInteractionClass(this.addNewPasazerHandle);
+        {
+//          publish Count new pasazer
 
+            this.addNewPasazerHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer");
+            this.countNewPasazerHandle = this.rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.NewPasazer"), "countNewPasazer");
+
+//          do the publication
+            this.rtiamb.publishInteractionClass(this.addNewPasazerHandle);
+        }
+        {
+        //          publish stop simulation interaction
+        this.stopSimulationHandle = this.rtiamb.getInteractionClassHandle("HLAinteractionRoot.StopSimulation");
+
+//          do the publication
+        this.rtiamb.publishInteractionClass(this.stopSimulationHandle);
+    }
+
+        {
+//          subscribe x_variable_forGUIPassnger interaction
+            xVariableForDrawGuitHandle = rtiamb.getInteractionClassHandle("HLAinteractionRoot.PasazerManagment.xVariableForDrawGui");
+
+//          get object parameter for subscribePassengerObjectHandle Interaction
+            xVariableForDrawGuiParameterHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.xVariableForDrawGui"), "xVariableForDrawGuiParameter");
+            yVariableForDrawGuiParameterHandle = rtiamb.getParameterHandle(rtiamb.getInteractionClassHandle("HLAinteractionRoot.xVariableForDrawGui"), "yVariableForDrawGuiParameter");
+            rtiamb.subscribeInteractionClass(xVariableForDrawGuitHandle);
+        }
     }
 
     /**
@@ -352,12 +418,41 @@ public class GUIFederate {
         return ("(timestamp) " + System.currentTimeMillis()).getBytes();
     }
 
+    protected void resignFederation() throws Exception {
+        try {
+            rtiamb.resignFederationExecution(ResignAction.DELETE_OBJECTS);
+        } catch (TimeoutException exception) {
+            log("Timeout exception when resign federation");
+        }
+
+        log("Resigned from federation");
+
+        destroyFederation();
+    }
+
+    private void destroyFederation() throws Exception {
+        log("Destroying federation");
+
+        try {
+            rtiamb.destroyFederationExecution(federationName);
+            log("Destroyed federation");
+        } catch (FederationExecutionDoesNotExist exception) {
+            log("No need to destroy federation, it doesn't exist");
+        } catch (FederatesCurrentlyJoined exception) {
+            log("Didn't destroy federation, federates still joined");
+        } catch (TimeoutException exception) {
+            log("Timeout exception when destroy federation");
+        } catch (RTIinternalError exception) {
+            log("RTI internal exception");
+        }
+    }
+
     //----------------------------------------------------------
     //                     STATIC METHODS
     //----------------------------------------------------------
     public static void main(String[] args) {
         // get a federate name, use "exampleFederate" as default
-        String federateName = "GUI";
+         String federateName = "GUI";
         if (args.length != 0) {
             federateName = args[0];
         }

@@ -14,7 +14,6 @@
  */
 package Pociag;
 
-import Konduktor.Konduktor;
 import Pasazer.Pasazer;
 import hla.rti1516e.AttributeHandle;
 import hla.rti1516e.AttributeHandleValueMap;
@@ -34,7 +33,7 @@ import hla.rti1516e.exceptions.FederateInternalError;
 import hla.rti1516e.exceptions.RTIexception;
 import hla.rti1516e.time.HLAfloat64Time;
 
-import java.util.List;
+import java.util.Random;
 
 /**
  * This class handles all incoming callbacks from the RTI regarding a particular
@@ -63,6 +62,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
     protected boolean isReadyToRun = false;
 
     protected boolean isRunning = true;
+    protected int numberOfxVariable;
 
     //----------------------------------------------------------
     //                      CONSTRUCTORS
@@ -223,7 +223,7 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
                                    LogicalTime time,
                                    OrderType receivedOrdering,
                                    SupplementalReceiveInfo receiveInfo)
-            throws FederateInternalError  {
+            throws FederateInternalError {
         StringBuilder builder = new StringBuilder("Interaction Received:");
 
         // print the handle
@@ -236,8 +236,12 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
             builder.append(" (SzukajMiejsca)");
 
         }
-//        Pociag pociag = Pociag.getInstance();
-        // print the tag
+        if( interactionClass.equals(federate.stopSimulationHandle) )
+        {
+            builder.append( " (stopSimulationHandle)" );
+            isRunning = false;
+        }
+
         builder.append(", tag=" + new String(tag));
         // print the time (if we have it) we'll get null if we are just receiving
         // a forwarded call from the other reflect callback above
@@ -282,7 +286,52 @@ public class PociagFederateAmbassador extends NullFederateAmbassador {
                 } catch (DecoderException e) {
                     e.printStackTrace();
                 }
-                federate.pociag.registerPasazer(passenger);
+                federate.pociag.registerPassenger(passenger);
+                federate.xVariable = 0;
+                federate.yVariable = 0;
+
+//              USTALENIE KOORDYNATOW DLA PASAZEROW O ZADANAYM WAGONIE
+                int index = passenger.getPrzedzialNR();
+                int nr_wagonNRPassenger = passenger.getNR_WagonNR();
+                if ((nr_wagonNRPassenger-1) == 0) {
+                    federate.xVariable = federate.xVariable + (nr_wagonNRPassenger-1) * 370 +
+                            5 + nr_wagonNRPassenger;
+                } else if ((nr_wagonNRPassenger-1) == 1) {
+                    federate.xVariable = federate.xVariable + (nr_wagonNRPassenger-1) * 370 +
+                            5 + (nr_wagonNRPassenger-1);
+                } else if ((nr_wagonNRPassenger-1) == 2) {
+                    federate.xVariable = federate.xVariable + (nr_wagonNRPassenger-1) * 370 +
+                            5 + (nr_wagonNRPassenger-1);
+                } else if ((nr_wagonNRPassenger-1) == 3) {
+                    federate.xVariable = federate.xVariable + (nr_wagonNRPassenger-1) * 370 +
+                            5 + (nr_wagonNRPassenger-1);
+                }
+
+//              USTALENIE KOORDYNATOW DLA PASAZEROW O ZADANAYM PRZEDZIALE
+                int index2 = index;
+                if (index2 == 0) {
+                    federate.xVariable = federate.xVariable + index2 * 76 ;
+                } else if (index2 == 1) {
+                    federate.xVariable = federate.xVariable + index2 * 76 ;
+                } else if (index2 == 2) {
+                    federate.xVariable = federate.xVariable + index2 * 76 ;
+                } else if (index2 == 3) {
+                    federate.xVariable = federate.xVariable + index2 * 76 ;
+                } else if (index2 == 4) {
+                    federate.xVariable = federate.xVariable + index2 * 76 ;
+                }
+                federate.xVariable = federate.xVariable  + new Random().nextInt(65);
+                numberOfxVariable = numberOfxVariable + 1;
+//
+//              USTALENIE KOORDYNATOW DLA PASAZEROW, KTOPRZY STOJA
+                if (index == -1) {
+                    federate.xVariable = federate.xVariable  + new Random().nextInt(333);
+                    federate.yVariable = new Random().nextInt(85) + 279;
+                } else {
+                    federate.yVariable = new Random().nextInt(272);
+                }
+                federate.varx.add(federate.xVariable);
+                federate.vary.add(federate.yVariable);
 
             }
         }

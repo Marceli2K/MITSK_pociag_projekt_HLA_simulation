@@ -268,6 +268,11 @@ public class PasazerFederateAmbassador extends NullFederateAmbassador {
         if (interactionClass.equals(this.federate.addNewPasazerHandle)) {
             builder.append(" (Dodanie nowego pasazera)");
         }
+        if( interactionClass.equals(federate.stopSimulationHandle) )
+        {
+            builder.append( " (stopSimulationHandle)" );
+            isRunning = false;
+        }
 
         // print the tag
         builder.append(", tag=" + new String(tag));
